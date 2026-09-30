@@ -1,65 +1,148 @@
 # Option Playbook
 
-A version-controlled research and training repository for developing, testing, and learning repeatable listed-options trading playbooks.
+A version-controlled research, teaching, and validation repository for developing repeatable US listed-options playbooks.
 
-## Current project
+## Start here
 
-**Phase 1:** Confirmed Intraday Momentum (CIM)  
-**Research instrument:** SPY  
-**Status:** V1 baseline frozen for testing  
-**Primary goal:** Test whether a mechanically defined opening-range break/retest signal has positive expectancy before adding discretionary filters.
+New learner or new AI session:
+
+```text
+START_HERE.md
+CURRENT_STATE.md
+SYSTEM_PROMPT.md
+```
+
+Reusable skill:
+
+```text
+skills/option-playbook/SKILL.md
+```
+
+New-chat copy/paste helper:
+
+```text
+templates/NEW_CHAT_BOOTSTRAP.md
+```
+
+## Current strategy
+
+```text
+Confirmed Intraday Momentum
+CIM-V1.0
+Underlying: SPY
+Status: FROZEN FOR PHASE-1 TESTING
+```
+
+Frozen reproducibility branch:
+
+```text
+frozen/cim-v1.0
+```
+
+Development branch:
+
+```text
+main
+```
+
+The evidence state remains:
+
+```text
+INSUFFICIENT EVIDENCE TO DETERMINE POSITIVE EXPECTANCY
+```
+
+The frozen strategy is a hypothesis to test, not a proven edge.
+
+## Project structure
+
+### Operation and governance
+
+- `START_HERE.md` — entry point for humans and AI sessions.
+- `SYSTEM_PROMPT.md` — portable project prompt.
+- `AGENTS.md` — coding/research-agent instructions.
+- `PROJECT_INSTRUCTIONS.md` — project behavior and teaching rules.
+- `CURRENT_STATE.md` — current learner/research state.
+- `GOVERNANCE.md` — anti-overfitting and version-control rules.
+- `ROADMAP.md` — phase plan.
+- `CHANGELOG.md` and `DECISION_LOG.md` — documented evolution.
+
+### Strategy
+
+- `strategy/PHASE_1_CIM_V1_FROZEN.md`
+- `strategy/RULE_DEFINITIONS.md`
+- `strategy/OPTION_TRANSLATION.md`
+
+### Skills
+
+- `SKILL_ROUTER.md`
+- `skills/option-playbook/SKILL.md`
+
+### Data
+
+- `DATA_SOURCES.md` — roles for GitHub, Webull, Alpaca, AlphaStocks, and web research.
+- `DATA_CONTRACT.md` — requirements for valid historical/live inputs.
+
+### Testing
+
+- `testing/BACKTEST_PROTOCOL.md`
+- `testing/ACCEPTANCE_TESTS.md`
+- `testing/IMPLEMENTATION_CHECKLIST.md`
+- `testing/TRADE_LOG_SCHEMA.md`
+- `testing/PILOT_PROTOCOL.md`
+
+### Lessons
+
+The course starts from zero.
+
+Foundation lessons:
+
+```text
+00A Market Basics
+00B Charts and Timeframes
+00C Orders and Execution
+00D Options Basics
+00E Risk and Process
+```
+
+Then the CIM operating curriculum covers market structure, opening range, break/retest, VWAP, ATR, volume, option selection, execution, R/MAE/MFE, replay, and journaling.
+
+SMA, EMA, RSI, previous-day levels, premarket levels, and event context are also taught, but are not active CIM-V1 entry filters.
+
+### Templates
+
+- `templates/REPLAY_WORKSHEET.md`
+- `templates/NEW_CHAT_BOOTSTRAP.md`
+
+## Research architecture
 
 The project deliberately separates:
 
-1. **Signal quality on the underlying**
-2. **Option-contract translation and execution**
-3. **Trader training and replay practice**
-4. **Forward/pilot execution data**
-
-A good chart is not automatically a good option trade.
-
-## Repository map
-
-- `strategy/` — frozen rules and exact definitions.
-- `testing/` — backtest, pilot, logging, and validation protocols.
-- `lessons/` — practical training required to operate the playbook.
-- `reference/` — glossary, indicator references, and concepts that are recorded but are not active V1 filters.
-- `CURRENT_STATE.md` — current phase, version, and learner/research status.
-- `CHANGELOG.md` — every strategy change after the freeze.
-- `GOVERNANCE.md` — rules preventing silent rule changes and overfitting.
-
-## Phase 1 philosophy
-
-The baseline is intentionally simple:
-
 ```text
-Wait for the opening range
-→ Require a 5-minute close beyond it
-→ Wait for a mechanical retest
-→ Require confirmation
-→ Enter only after confirmation
-→ Stop on underlying structural invalidation
-→ Measure the option separately
+Underlying signal
+Option translation
+Execution
+Trader behavior
+Trade outcome
 ```
 
-No trend means no trade.
+A good chart is not automatically a good option contract, entry, execution, or trade.
 
-Indicators such as RSI, SMA, EMA, relative volume, previous-day levels, and premarket levels are taught and logged where useful, but they are **not active V1 entry filters** unless a future version change is pre-registered and documented.
+## Backtest gate
 
-## Research layers
+Performance results should not be trusted until:
 
-### Layer 1 — Underlying signal
-
-Use consolidated SPY 1-minute data over a multi-year sample. Build 5-minute bars from the same data source. Test the frozen signal mechanically and record underlying R, MAE, MFE, time in trade, and context variables.
-
-### Layer 2 — Option translation
-
-Translate qualifying signals to the specified option-selection method using actual historical option data when available. If only a model is available, label model-derived results separately from observed quotes/fills. Include bid/ask friction and slippage assumptions.
-
-### Pilot
-
-Use a small forward sample to debug rule interpretation and measure real execution. A pilot is not proof of edge.
+```text
+DATA_CONTRACT.md is satisfied
+AND
+testing/ACCEPTANCE_TESTS.md passes
+AND
+testing/IMPLEMENTATION_CHECKLIST.md is complete
+```
 
 ## Important
 
-This repository is for research and education. Historical performance does not guarantee future results. Rules should not be changed after seeing test outcomes without creating a new version and an out-of-sample validation plan.
+This repository is for research and education.
+
+Do not change a frozen strategy after seeing results and present the modified version as an unbiased test.
+
+Historical performance does not guarantee future results.
