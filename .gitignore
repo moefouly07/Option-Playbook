@@ -1,0 +1,48 @@
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+credentials.*
+secrets.*
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local market-data stores
+/data/raw/
+/data/vendor/
+/data/cache/
+/data/downloads/
+
+# Large local analytical stores
+*.parquet
+*.feather
+*.arrow
+*.duckdb
+*.sqlite
+*.db
+
+# Generated runs / local artifacts
+/outputs/
+/artifacts/
+/reports/local/
+/tmp/
+
+# Logs
+*.log
