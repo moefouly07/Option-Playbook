@@ -1,5 +1,33 @@
 # Changelog
 
+## Operational / education update — 2026-09-29
+
+No CIM-V1 behavioral rule changed.
+
+Added:
+
+- new-chat onboarding via `START_HERE.md`;
+- portable `SYSTEM_PROMPT.md`;
+- `AGENTS.md` for coding/research agents;
+- reusable `skills/option-playbook/SKILL.md`;
+- `SKILL_ROUTER.md`;
+- `DATA_SOURCES.md` and `DATA_CONTRACT.md`;
+- synthetic `testing/ACCEPTANCE_TESTS.md`;
+- backtest implementation checklist;
+- project roadmap;
+- replay and new-chat templates;
+- beginner foundation lessons 00A–00E.
+
+Learner instruction changed to:
+
+```text
+START FROM ZERO
+```
+
+This is a teaching-state change, not a strategy-rule change.
+
+---
+
 ## CIM-V1.0 — 2026-09-29
 
 Status: **FROZEN FOR PHASE-1 TESTING**
