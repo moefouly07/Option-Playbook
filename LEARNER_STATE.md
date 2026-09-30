@@ -6,8 +6,8 @@
 Course: ACTIVE
 Track: Option Playbook — From Zero to CIM-V1
 Current lesson: 00A Market Basics From Zero
-Current lesson status: NOT STARTED
-Current lesson phase: EXPLAIN_FULL_LESSON
+Current lesson status: IN_PROGRESS
+Current lesson phase: DISCUSSION_AFTER_FULL_EXPLANATION
 ```
 
 ## Current instruction
@@ -97,3 +97,11 @@ Last update
 ```
 
 Do not mix learner progress with strategy-version changes.
+
+## Last update
+
+```text
+2026-09-29
+00A full lesson explanation delivered.
+Next phase: discussion/questions before practical checks.
+```
