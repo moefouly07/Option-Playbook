@@ -1,8 +1,34 @@
-# Course Map — Phase 1
+# Course Map — From Zero to CIM-V1
 
-هدف المرحلة دي إنك تبقى قادر تشغّل الاستراتيجية بنفس التعريف كل مرة، مش تحفظ كام مؤشر.
+الهدف إنك تفهم الأدوات وتعرف تشغّل الاستراتيجية بنفس التعريف كل مرة، مش تحفظ كام خط على الشارت.
 
-## Core lessons
+## Foundation — نبدأ من الصفر
+
+```text
+00A Market Basics From Zero
+00B Charts and Timeframes From Zero
+00C Orders and Execution From Zero
+00D Options Basics From Zero
+00E Risk and Process From Zero
+```
+
+بعد الخمس دروس دول لازم تبقى فاهم يعني إيه:
+
+```text
+stock / ETF
+bid / ask / spread
+trade / quote
+1m / 5m
+completed candle
+market / limit order
+call / put
+strike / expiry
+ITM / ATM / OTM
+premium
+stop / target / R
+```
+
+## Core CIM lessons
 
 ```text
 01 Market Structure + Candles
@@ -27,7 +53,7 @@
 15 Event & Session Context
 ```
 
-الدروس المساندة مهمة للفهم، لكن مش معناها إنها شروط دخول في النسخة المجمدة.
+الدروس المساندة مهمة للفهم والبحث، لكن وجودها في الكورس لا يجعلها شروط دخول في النسخة المجمدة.
 
 ## طريقة كل درس
 
@@ -37,16 +63,23 @@ Concept
 → Simple example
 → Common mistake
 → Role in CIM-V1
+→ Discussion
 → Practice cases
 ```
 
-بعد الدرس الكامل نعمل مناقشة واختبار، مش العكس.
+الدرس كامل الأول.
+
+الاختبار بعد الشرح.
 
 ## علامة النجاح
 
-إنت مش محتاج تحفظ تعريفات فقط.
+في البداية:
 
-لازم تقدر تبص على شارت مخفي المستقبل وتقول:
+تقدر تشرح المصطلحات الأساسية من غير ما تعتمد على الحفظ الأعمى.
+
+بعدها:
+
+تقدر تبص على Replay مخفي المستقبل وتقول:
 
 ```text
 Trade
