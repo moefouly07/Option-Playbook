@@ -9,6 +9,7 @@ New learner or new AI session:
 ```text
 START_HERE.md
 CURRENT_STATE.md
+LEARNER_STATE.md
 SYSTEM_PROMPT.md
 ```
 
@@ -61,9 +62,11 @@ The frozen strategy is a hypothesis to test, not a proven edge.
 - `SYSTEM_PROMPT.md` — portable project prompt.
 - `AGENTS.md` — coding/research-agent instructions.
 - `PROJECT_INSTRUCTIONS.md` — project behavior and teaching rules.
-- `CURRENT_STATE.md` — current learner/research state.
+- `CURRENT_STATE.md` — current project/research state.
+- `LEARNER_STATE.md` — exact lesson and learner-resume state.
 - `GOVERNANCE.md` — anti-overfitting and version-control rules.
 - `ROADMAP.md` — phase plan.
+- `SECURITY.md` — secrets, broker-data, and vendor-data rules.
 - `CHANGELOG.md` and `DECISION_LOG.md` — documented evolution.
 
 ### Strategy
@@ -81,6 +84,7 @@ The frozen strategy is a hypothesis to test, not a proven edge.
 
 - `DATA_SOURCES.md` — roles for GitHub, Webull, Alpaca, AlphaStocks, and web research.
 - `DATA_CONTRACT.md` — requirements for valid historical/live inputs.
+- `data/README.md` — local dataset policy.
 
 ### Testing
 
@@ -111,6 +115,8 @@ SMA, EMA, RSI, previous-day levels, premarket levels, and event context are also
 ### Templates
 
 - `templates/REPLAY_WORKSHEET.md`
+- `templates/LESSON_SESSION.md`
+- `templates/BACKTEST_RUN_REPORT.md`
 - `templates/NEW_CHAT_BOOTSTRAP.md`
 
 ## Research architecture
