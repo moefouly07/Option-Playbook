@@ -60,7 +60,14 @@ DATA_CONTRACT.md
 
 ### Current-market application
 
-Also obtain fresh market data and clearly state:
+Also read:
+
+```text
+workflows/LIVE_SESSION_WORKFLOW.md
+DATA_SOURCES.md
+```
+
+Then obtain fresh market data and clearly state:
 
 ```text
 timestamp
