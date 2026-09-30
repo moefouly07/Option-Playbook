@@ -86,6 +86,10 @@ The frozen strategy is a hypothesis to test, not a proven edge.
 - `DATA_CONTRACT.md` — requirements for valid historical/live inputs.
 - `data/README.md` — local dataset policy.
 
+### Workflows
+
+- `workflows/LIVE_SESSION_WORKFLOW.md` — exact live-data sequence for Webull / Alpaca / AlphaStocks usage.
+
 ### Testing
 
 - `testing/BACKTEST_PROTOCOL.md`
