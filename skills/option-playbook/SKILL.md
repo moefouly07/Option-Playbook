@@ -12,6 +12,7 @@ Read:
 ```text
 START_HERE.md
 CURRENT_STATE.md
+LEARNER_STATE.md
 PROJECT_INSTRUCTIONS.md
 ```
 
@@ -23,11 +24,13 @@ For a lesson request:
 
 ```text
 lessons/00_COURSE_MAP.md
-current lesson file
+current lesson from LEARNER_STATE.md
 reference/GLOSSARY.md when needed
 ```
 
 Teach from zero unless the learner explicitly requests a skip.
+
+Resume from the documented lesson phase.
 
 Explain the whole lesson before testing.
 
@@ -38,8 +41,11 @@ concept
 → simple example
 → mistake
 → CIM-V1 role
+→ discussion
 → practice
 ```
+
+After a lesson milestone, update `LEARNER_STATE.md`.
 
 ## Strategy mode
 
@@ -60,6 +66,7 @@ Also read:
 
 ```text
 GOVERNANCE.md
+AGENTS.md
 DATA_CONTRACT.md
 testing/BACKTEST_PROTOCOL.md
 testing/ACCEPTANCE_TESTS.md
