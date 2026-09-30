@@ -64,7 +64,7 @@ lessons/QUICK_CHECKLIST.md
 
 ## Post-freeze operational layer on main
 
-After the strategy snapshot was frozen, the development branch added operational and educational infrastructure that **does not change CIM-V1 behavior**:
+After the strategy snapshot was frozen, the development branch added infrastructure that **does not change CIM-V1 behavior**:
 
 ```text
 START_HERE.md
@@ -72,16 +72,23 @@ SYSTEM_PROMPT.md
 AGENTS.md
 SKILL_ROUTER.md
 skills/option-playbook/SKILL.md
+CURRENT_STATE.md updates
+LEARNER_STATE.md
 DATA_SOURCES.md
 DATA_CONTRACT.md
+data/README.md
+SECURITY.md
+.gitignore
 testing/ACCEPTANCE_TESTS.md
 testing/IMPLEMENTATION_CHECKLIST.md
 ROADMAP.md
+PROJECT_AUDIT.md
+workflows/LIVE_SESSION_WORKFLOW.md
 templates/
 lessons/00A–00E foundation lessons
 ```
 
-These files improve reproducibility, model onboarding, implementation safety, and beginner education.
+These files improve reproducibility, model onboarding, learner resumption, implementation safety, security, live-data handling, and beginner education.
 
 They are not retroactively part of the original frozen snapshot.
 
@@ -91,4 +98,4 @@ Do not modify the frozen branch.
 
 Any change that affects trade eligibility, entry, stop, target, timing, contract selection, or exit requires a new strategy version.
 
-Educational wording, tooling, tests, and documentation may evolve on `main` as long as they do not silently change the strategy behavior.
+Educational wording, tooling, tests, and documentation may evolve on `main` as long as they do not silently change strategy behavior.
