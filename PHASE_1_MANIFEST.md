@@ -1,15 +1,20 @@
 # Phase 1 Freeze Manifest
 
-## Version
+## Frozen version
 
 ```text
 Strategy: Confirmed Intraday Momentum
 Version:  CIM-V1.0
 Status:   FROZEN
 Date:     2026-09-29
+Branch:   frozen/cim-v1.0
 ```
 
-## Canonical strategy files
+The frozen branch is the reproducibility snapshot.
+
+## Files inside the frozen research snapshot
+
+### Canonical strategy
 
 ```text
 strategy/PHASE_1_CIM_V1_FROZEN.md
@@ -17,7 +22,7 @@ strategy/RULE_DEFINITIONS.md
 strategy/OPTION_TRANSLATION.md
 ```
 
-## Governance and state
+### Governance/state at freeze time
 
 ```text
 CURRENT_STATE.md
@@ -27,7 +32,7 @@ DECISION_LOG.md
 PROJECT_INSTRUCTIONS.md
 ```
 
-## Test specification
+### Test specification at freeze time
 
 ```text
 testing/BACKTEST_PROTOCOL.md
@@ -35,7 +40,7 @@ testing/TRADE_LOG_SCHEMA.md
 testing/PILOT_PROTOCOL.md
 ```
 
-## Training curriculum
+### Training content at freeze time
 
 ```text
 lessons/00_COURSE_MAP.md
@@ -57,17 +62,33 @@ lessons/15_EVENT_AND_SESSION_CONTEXT.md
 lessons/QUICK_CHECKLIST.md
 ```
 
-## Reference
+## Post-freeze operational layer on main
+
+After the strategy snapshot was frozen, the development branch added operational and educational infrastructure that **does not change CIM-V1 behavior**:
 
 ```text
-reference/GLOSSARY.md
-reference/INDICATORS_NOT_ACTIVE_V1.md
+START_HERE.md
+SYSTEM_PROMPT.md
+AGENTS.md
+SKILL_ROUTER.md
+skills/option-playbook/SKILL.md
+DATA_SOURCES.md
+DATA_CONTRACT.md
+testing/ACCEPTANCE_TESTS.md
+testing/IMPLEMENTATION_CHECKLIST.md
+ROADMAP.md
+templates/
+lessons/00A–00E foundation lessons
 ```
+
+These files improve reproducibility, model onboarding, implementation safety, and beginner education.
+
+They are not retroactively part of the original frozen snapshot.
 
 ## Freeze rule
 
-The frozen branch/reference is a research snapshot.
+Do not modify the frozen branch.
 
-Do not modify the V1 behavior in place after results are observed. Any change that affects trade eligibility, entry, stop, target, timing, contract selection, or exit creates a new strategy version.
+Any change that affects trade eligibility, entry, stop, target, timing, contract selection, or exit requires a new strategy version.
 
-Educational wording and typo fixes may be made on the development branch only if they do not alter behavior; the frozen snapshot remains the reproducibility reference.
+Educational wording, tooling, tests, and documentation may evolve on `main` as long as they do not silently change the strategy behavior.
