@@ -11,12 +11,15 @@ Added:
 - `AGENTS.md` for coding/research agents;
 - reusable `skills/option-playbook/SKILL.md`;
 - `SKILL_ROUTER.md`;
+- dedicated `LEARNER_STATE.md` for exact lesson resumption;
 - `DATA_SOURCES.md` and `DATA_CONTRACT.md`;
+- `workflows/LIVE_SESSION_WORKFLOW.md` for Webull / Alpaca / AlphaStocks usage;
 - synthetic `testing/ACCEPTANCE_TESTS.md`;
 - backtest implementation checklist;
-- project roadmap;
-- replay and new-chat templates;
-- beginner foundation lessons 00A–00E.
+- project roadmap and project audit;
+- replay, lesson-session, backtest-report, and new-chat templates;
+- beginner foundation lessons 00A–00E;
+- `SECURITY.md`, `.gitignore`, and local-data policy.
 
 Learner instruction changed to:
 
