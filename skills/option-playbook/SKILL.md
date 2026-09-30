@@ -79,6 +79,13 @@ Keep Layer 1 underlying signal results separate from Layer 2 option translation.
 
 ## Live-example mode
 
+Read:
+
+```text
+workflows/LIVE_SESSION_WORKFLOW.md
+DATA_SOURCES.md
+```
+
 For current SPY/options examples, use current reliable market sources when available.
 
 State:
