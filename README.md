@@ -25,6 +25,12 @@ New-chat copy/paste helper:
 templates/NEW_CHAT_BOOTSTRAP.md
 ```
 
+Project-completeness audit:
+
+```text
+PROJECT_AUDIT.md
+```
+
 ## Current strategy
 
 ```text
@@ -66,6 +72,7 @@ The frozen strategy is a hypothesis to test, not a proven edge.
 - `LEARNER_STATE.md` — exact lesson and learner-resume state.
 - `GOVERNANCE.md` — anti-overfitting and version-control rules.
 - `ROADMAP.md` — phase plan.
+- `PROJECT_AUDIT.md` — what is complete vs intentionally future work.
 - `SECURITY.md` — secrets, broker-data, and vendor-data rules.
 - `CHANGELOG.md` and `DECISION_LOG.md` — documented evolution.
 
