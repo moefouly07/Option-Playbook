@@ -50,3 +50,11 @@ Thumbs.db
 # Scanner raw payloads (vendor data; summaries only may be committed)
 /scanner/runs/raw/
 /scanner/src/muse/**/config.json
+
+# Local transfer files
+*.patch
+*.zip
+
+# Local transfer files
+*.patch
+*.zip
