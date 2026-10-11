@@ -130,3 +130,15 @@ Decision:
 - A live entry point and data adapter must be built, exported in a transfer-safe encoding, and reviewed (T1c) before T3.
 
 Consequence: T1 is repeated on the expanded fixtures as part of T1b-2.
+
+## D-020 - Correction to D-018: the V1.0 AAPL/SPY correlation was correct
+
+Date: 2026-10-11 (ET). No rule changed.
+
+D-018 recorded the positional zip as the leading explanation for the V1.0 AAPL/SPY value of 0.05. T2 refutes that for this pair and window. All seven tested symbols share the same 100 sessions ending 2026-10-09, so the positional zip happened to be date-aligned. The archived V1.0 path and the committed V1.1 correlation() both return 0.047222 on the same SIP bars. An independent second vendor (FMP end-of-day closes) gives the same 0.047222 over the same 60 returns (2026-07-17 to 2026-10-09).
+
+The low value is real in this data. It is dominated by AAPL-specific sessions: the largest AAPL moves ran against SPY (2026-07-31: AAPL -7.35%, SPY +0.72%; 2026-09-10: AAPL +3.56%, SPY -0.60%). Excluding the three largest AAPL sessions gives 0.22, and the 20-session window ending 2026-10-09 gives 0.35.
+
+What stands: the V1.0 positional method is unsafe in principle because it has no date check; the V1.1 method and fixtures already guard against it. The criticism of the V1.0 "diversification intact" claim also stands, because low pairwise correlation over one window does not remove shared broad-market beta in a selloff.
+
+FUTURE RESEARCH (not V1.1, not active): event-robust correlation, for example excluding earnings sessions or using rank correlation. Any adoption is a new scanner version.
