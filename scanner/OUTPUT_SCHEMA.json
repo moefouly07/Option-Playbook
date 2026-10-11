@@ -4,58 +4,183 @@
   "title": "SCANNER-V1.1 run report",
   "type": "object",
   "required": [
-    "spec_version", "spec_commit_sha", "implementation_ref", "run_type",
-    "scan_started_at_et", "market_session", "calendar_check",
-    "latest_completed_daily_bar_date", "data_sources", "universe",
-    "regime", "results", "selection", "options_status", "data_quality", "audit_notes"
+    "spec_version",
+    "spec_commit_sha",
+    "implementation_ref",
+    "implementation_files",
+    "run_type",
+    "scan_started_at_et",
+    "market_session",
+    "calendar_check",
+    "latest_completed_daily_bar_date",
+    "data_sources",
+    "universe",
+    "regime",
+    "results",
+    "selection",
+    "options_status",
+    "data_quality",
+    "audit_notes"
   ],
   "properties": {
-    "spec_version": {"const": "SCANNER-V1.1"},
-    "spec_commit_sha": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
-    "implementation_ref": {"type": "string", "description": "hash or version of the code that produced this run"},
-    "run_type": {"enum": ["LIVE", "IN_SAMPLE_REPLAY", "FIXTURE_TEST", "EXPLORATORY_NOT_V1.1"]},
-    "scan_started_at_et": {"type": "string", "format": "date-time"},
-    "market_session": {"enum": ["PREMARKET", "REGULAR", "AFTER_HOURS", "CLOSED", "EARLY_CLOSE_DAY"]},
-    "calendar_check": {
-      "type": "object",
-      "required": ["source", "is_trading_day", "notes"],
-      "properties": {
-        "source": {"type": "string"},
-        "is_trading_day": {"type": "boolean"},
-        "notes": {"type": "string"}
+    "spec_version": {
+      "const": "SCANNER-V1.1"
+    },
+    "spec_commit_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "implementation_ref": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "manifest hash over every executed file, computed by scanner/tools/implementation_ref.py (D-019)"
+    },
+    "implementation_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
       }
     },
-    "latest_completed_daily_bar_date": {"type": "string", "format": "date"},
-    "latest_completed_sip_5m_bar_et": {"type": ["string", "null"]},
+    "run_type": {
+      "enum": [
+        "LIVE",
+        "IN_SAMPLE_REPLAY",
+        "FIXTURE_TEST",
+        "EXPLORATORY_NOT_V1.1"
+      ]
+    },
+    "scan_started_at_et": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "market_session": {
+      "enum": [
+        "PREMARKET",
+        "REGULAR",
+        "AFTER_HOURS",
+        "CLOSED",
+        "EARLY_CLOSE_DAY"
+      ]
+    },
+    "calendar_check": {
+      "type": "object",
+      "required": [
+        "source",
+        "is_trading_day",
+        "notes"
+      ],
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "is_trading_day": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "latest_completed_daily_bar_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "latest_completed_sip_5m_bar_et": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "data_sources": {
       "type": "object",
-      "required": ["daily_bars", "intraday_bars", "quotes"],
+      "required": [
+        "daily_bars",
+        "intraday_bars",
+        "quotes"
+      ],
       "properties": {
-        "daily_bars": {"type": "string", "description": "e.g. alpaca sip 1Day adjustment=..."},
-        "intraday_bars": {"type": "string"},
-        "quotes": {"type": "string", "description": "e.g. iex single-venue realtime / delayed_sip"}
+        "daily_bars": {
+          "type": "string",
+          "description": "e.g. alpaca sip 1Day adjustment=..."
+        },
+        "intraday_bars": {
+          "type": "string"
+        },
+        "quotes": {
+          "type": "string",
+          "description": "e.g. iex single-venue realtime / delayed_sip"
+        }
       }
     },
     "universe": {
       "type": "object",
-      "required": ["universe_source", "universe_count", "eligible_count", "processed_count",
-                   "rejected_count", "insufficient_count", "benchmark"],
+      "required": [
+        "universe_source",
+        "universe_count",
+        "eligible_count",
+        "processed_count",
+        "rejected_count",
+        "insufficient_count",
+        "benchmark"
+      ],
       "properties": {
-        "universe_source": {"const": "fixed pilot watchlist (scanner/SCANNER_V1_1_SPEC.md)"},
-        "universe_count": {"const": 21},
-        "eligible_count": {"const": 20},
-        "processed_count": {"type": "integer"},
-        "rejected_count": {"type": "integer"},
-        "insufficient_count": {"type": "integer"},
-        "benchmark": {"const": "SPY"}
+        "universe_source": {
+          "const": "fixed pilot watchlist (scanner/SCANNER_V1_1_SPEC.md)"
+        },
+        "universe_count": {
+          "const": 21
+        },
+        "eligible_count": {
+          "const": 20
+        },
+        "processed_count": {
+          "type": "integer"
+        },
+        "rejected_count": {
+          "type": "integer"
+        },
+        "insufficient_count": {
+          "type": "integer"
+        },
+        "benchmark": {
+          "const": "SPY"
+        }
       }
     },
     "regime": {
       "type": "object",
-      "required": ["label", "status", "watchlist_breadth_above_sma50", "sector_etfs_above_sma20", "sector_etfs_counted"],
+      "required": [
+        "label",
+        "status",
+        "watchlist_breadth_above_sma50",
+        "sector_etfs_above_sma20",
+        "sector_etfs_counted"
+      ],
       "properties": {
-        "label": {"enum": ["RISK_ON", "RISK_OFF", "MIXED"]},
-        "status": {"const": "RECORDED_ONLY"}
+        "label": {
+          "enum": [
+            "RISK_ON",
+            "RISK_OFF",
+            "MIXED"
+          ]
+        },
+        "status": {
+          "const": "RECORDED_ONLY"
+        }
       }
     },
     "results": {
@@ -63,43 +188,156 @@
       "minItems": 21,
       "items": {
         "type": "object",
-        "required": ["symbol", "label", "setup", "triggered", "failed", "flags", "reason", "metrics"],
+        "required": [
+          "symbol",
+          "label",
+          "setup",
+          "triggered",
+          "failed",
+          "flags",
+          "reason",
+          "metrics"
+        ],
         "properties": {
-          "symbol": {"type": "string"},
-          "label": {"enum": ["CONFIRMED_SETUP", "RESEARCH_PASS", "WATCH", "REJECT", "INSUFFICIENT_DATA", "BENCHMARK"]},
-          "setup": {"enum": ["BREAKOUT_20D", "PULLBACK_TO_SMA20", null]},
-          "triggered": {"type": "array", "items": {"type": "string"}},
-          "failed": {"type": "array", "items": {"type": "string"}},
-          "flags": {"type": "array", "items": {"type": "string"}},
-          "reason": {"type": "string"},
-          "pivot": {"type": ["number", "null"]},
-          "invalidation": {"type": ["number", "null"]},
-          "metrics": {"type": "object"},
-          "factor_tag": {"type": "string"},
+          "symbol": {
+            "type": "string"
+          },
+          "label": {
+            "enum": [
+              "CONFIRMED_SETUP",
+              "RESEARCH_PASS",
+              "WATCH",
+              "REJECT",
+              "INSUFFICIENT_DATA",
+              "BENCHMARK"
+            ]
+          },
+          "setup": {
+            "enum": [
+              "BREAKOUT_20D",
+              "PULLBACK_TO_SMA20",
+              null
+            ]
+          },
+          "triggered": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "type": "string"
+          },
+          "pivot": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "invalidation": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "metrics": {
+            "type": "object"
+          },
+          "factor_tag": {
+            "type": "string"
+          },
           "earnings": {
             "type": "object",
             "properties": {
-              "next_date": {"type": ["string", "null"]},
-              "source": {"type": ["string", "null"]},
-              "status": {"enum": ["VERIFIED", "EARNINGS_DATE_UNVERIFIED"]},
-              "event_risk": {"type": "boolean"}
+              "next_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "VERIFIED",
+                  "EARNINGS_DATE_UNVERIFIED"
+                ]
+              },
+              "event_risk": {
+                "type": "boolean"
+              }
             }
           },
-          "intraday_status": {"enum": ["ABOVE_PIVOT", "BETWEEN_PIVOT_AND_INVALIDATION", "BELOW_INVALIDATION", "NOT_AVAILABLE", null]},
+          "intraday_status": {
+            "enum": [
+              "ABOVE_PIVOT",
+              "BETWEEN_PIVOT_AND_INVALIDATION",
+              "BELOW_INVALIDATION",
+              "NOT_AVAILABLE",
+              null
+            ]
+          },
           "catalysts": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["headline_paraphrase", "source_name", "source_tier", "url", "published", "verified"],
+              "required": [
+                "headline_paraphrase",
+                "source_name",
+                "source_tier",
+                "url",
+                "published",
+                "verified"
+              ],
               "properties": {
-                "headline_paraphrase": {"type": "string"},
-                "source_name": {"type": "string"},
-                "source_tier": {"enum": ["PRIMARY", "PRESS", "AGGREGATOR"]},
-                "url": {"type": "string"},
-                "published": {"type": "string", "description": "exact ET timestamp, or YYYY-MM-DD with DATE_ONLY flag"},
-                "date_only": {"type": "boolean"},
-                "verified": {"type": "boolean"},
-                "unverified_claims": {"type": "array", "items": {"type": "string"}}
+                "headline_paraphrase": {
+                  "type": "string"
+                },
+                "source_name": {
+                  "type": "string"
+                },
+                "source_tier": {
+                  "enum": [
+                    "PRIMARY",
+                    "PRESS",
+                    "AGGREGATOR"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                },
+                "published": {
+                  "type": "string",
+                  "description": "exact ET timestamp, or YYYY-MM-DD with DATE_ONLY flag"
+                },
+                "date_only": {
+                  "type": "boolean"
+                },
+                "verified": {
+                  "type": "boolean"
+                },
+                "unverified_claims": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -108,24 +346,70 @@
     },
     "selection": {
       "type": "object",
-      "required": ["verdict", "shortlist", "skipped_for_correlation", "correlation_log"],
+      "required": [
+        "verdict",
+        "shortlist",
+        "skipped_for_correlation",
+        "correlation_log"
+      ],
       "properties": {
-        "verdict": {"enum": ["CANDIDATES", "NO_CANDIDATES"]},
-        "shortlist": {"type": "array", "maxItems": 3, "items": {"type": "string", "not": {"const": "SPY"}}},
-        "skipped_for_correlation": {"type": "array"},
+        "verdict": {
+          "enum": [
+            "CANDIDATES",
+            "NO_CANDIDATES"
+          ]
+        },
+        "shortlist": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "not": {
+              "const": "SPY"
+            }
+          }
+        },
+        "skipped_for_correlation": {
+          "type": "array"
+        },
         "correlation_log": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["pair", "r", "n", "first", "last", "method"],
-            "properties": {"method": {"const": "simple_returns_inner_join"}}
+            "required": [
+              "pair",
+              "r",
+              "n",
+              "first",
+              "last",
+              "method"
+            ],
+            "properties": {
+              "method": {
+                "const": "simple_returns_inner_join"
+              }
+            }
           }
         }
       }
     },
-    "options_status": {"const": "OPTIONS_NOT_VERIFIED"},
-    "outcome_log_rows_written": {"type": "integer"},
-    "data_quality": {"type": "array", "items": {"type": "string"}},
-    "audit_notes": {"type": "array", "items": {"type": "string"}}
+    "options_status": {
+      "const": "OPTIONS_NOT_VERIFIED"
+    },
+    "outcome_log_rows_written": {
+      "type": "integer"
+    },
+    "data_quality": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "audit_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   }
 }

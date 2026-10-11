@@ -162,6 +162,8 @@ Shared-factor tags (static, recorded only): `semis` (SMH NVDA AMD MU AVGO MRVL Q
 
 The run report must validate against `scanner/OUTPUT_SCHEMA.json`, include all 21 symbols, and state the verdict. Raw vendor bars are not committed (see `SECURITY.md`).
 
+`implementation_ref` is a manifest hash over every executed file, computed by `scanner/tools/implementation_ref.py` (D-019): per-file sha256 of UTF-8 bytes with LF line endings, one `path  sha256` line per file sorted by path, then sha256 of the manifest. The report lists the files in `implementation_files`. Live runs use only the committed entry point `scanner/src/muse/run_scan_v11.py`.
+
 ## 11. Outcome logging (starts with the first live run)
 
 For every symbol in every run, log label, setup, pivot, invalidation, and close at the scan's latest completed daily bar. Later fill forward closes at +1, +5, and +10 sessions, and whether invalidation was hit first. These horizons are pre-registered now so evaluation is not chosen after the fact. Logging is research bookkeeping, not a performance claim.
@@ -169,3 +171,5 @@ For every symbol in every run, log label, setup, pivot, invalidation, and close 
 ## 12. Acceptance
 
 V1.1 may be scheduled only after every test in `scanner/MUSE_ACCEPTANCE_TESTS.md` passes and a human signs off in `DECISION_LOG.md`.
+
+The golden fixtures are themselves tested: `scanner/tests/test_fixture_sensitivity.py` requires every listed wrong implementation to fail. Expanding fixtures or mutants is a test change, not a rule change, but is logged in `DECISION_LOG.md`.

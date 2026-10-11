@@ -1,5 +1,11 @@
 # Changelog
 
+## Test hardening — 2026-10-11
+
+No rule changed. Fixtures 14 → 21 synthetic symbols; 12-mutant sensitivity test; canonical `scanner/src/muse/` copy of Muse's rules engine and harness; `scanner/tools/ast_equivalence.py` and `scanner/tools/implementation_ref.py`; manifest-based `implementation_ref`; acceptance steps T1b-2 and T1c (D-019).
+
+---
+
 ## Deployment correction — 2026-10-11
 
 No rule changed. Completed the SCANNER-V1.1 upload: committed the `scanner/` tree (spec, reference implementation, tests, fixtures, schema, acceptance tests), removed the stray root `scanner-v1.1.patch` and root `MUSE_ACCEPTANCE_TESTS.md`, added `scanner/ACCEPTANCE_LOG.md` and D-018.

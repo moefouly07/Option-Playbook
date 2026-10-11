@@ -114,3 +114,19 @@ Findings reported by Muse in T0 (self-reported, not yet verified against exporte
 - Correlation was a positional zip of 60 returns with no date join. This matches the synthetic reproduction in `test_join_on_dates_not_positions` and is the leading explanation for the V1.0 AAPL/SPY value of 0.05. T2 must still demonstrate it with code.
 
 Consequence: the V1.0 pilot report described its own logic incompletely, so its outputs cannot be reproduced from its text. This confirms the D-017 gate: no implementation is trusted from its description, only from reproducing the golden fixtures and exporting its code (T1b).
+
+## D-019 — Fixture coverage expansion, canonical code copy, manifest implementation_ref
+
+Date: 2026-10-11 (ET). No rule, parameter, label, gate, or ranking changed.
+
+Context: Muse's T1b export arrived through a chat paste that lost line breaks, so byte identity with its stated hash could not be verified. The code was transcribed with whitespace restored. Run independently, the transcription reproduced the original 14-symbol fixtures with zero differences. Mutation testing then showed the gate was weak: a wrong RS gate (`>= 0`) and a positional, date-blind correlation (the V1.0 bug) both still passed.
+
+Decision:
+
+- Fixtures expanded from 14 to 21 synthetic symbols: ZERO (RS exactly 0.0), PULV (volume floor), GAPF (close above prior close but below open), BRKS (above 20-day high but below SMA50), BARS60 (between 55 and 70 bars), XLI (thin synthetic sector ETF), BRKO (extension between 3.0 and 3.5 ATR); TWIN now has five missing sessions. Intended shortlist becomes BRKC, PULC, GAPF.
+- `scanner/tests/test_fixture_sensitivity.py` applies 12 known-wrong mutants (most are disclosed V1.0 behaviours) to the reference and requires every one to fail the golden comparison.
+- `scanner/src/muse/` holds the canonical copy of Muse's code. GitHub is the source of truth; Muse verifies equivalence with `scanner/tools/ast_equivalence.py`, then runs the committed bytes only.
+- `implementation_ref` is redefined as a manifest hash over every executed file (`scanner/tools/implementation_ref.py`). A report whose manifest does not match the accepted one is rejected. The T1 attempt-1 value (`a3fe7a60…`) remains in the acceptance log as history.
+- A live entry point and data adapter must be built, exported in a transfer-safe encoding, and reviewed (T1c) before T3.
+
+Consequence: T1 is repeated on the expanded fixtures as part of T1b-2.

@@ -43,20 +43,53 @@ Then:
 5. Report a content hash of your implementation as implementation_ref.
 ```
 
-PASS: reference suite `OK` (14 tests). Your implementation matches all 14 symbols, shortlist is `BRKC, PULC, BRKE`, and `TWIN` is skipped for correlation with `PULC`.
+PASS: reference suite `OK` (16 tests, including 12 mutation subtests). Your implementation matches all 21 symbols, shortlist is `BRKC, PULC, GAPF`, and `TWIN` (which has 5 missing sessions) is skipped for correlation with `PULC`.
+
+Fixture history: attempt 1 ran on the original 14 symbols. Mutation testing then showed that two wrong implementations (RS gate `>=`, positional correlation) still passed, so the fixtures were expanded to 21 symbols (D-019). T1 must be repeated on the expanded set.
 
 FAIL: any mismatch. Muse must not "fix" by editing fixtures or the spec.
 
-### T1b — Code export for version control
+### T1b — Code export and canonical copy
+
+Attempt 1 (2026-10-11): Muse printed both files, but the chat paste lost line breaks, so byte identity could not be verified. The files were transcribed with whitespace restored and committed under `scanner/src/muse/` as the **canonical copy**. From now on GitHub is the source of truth and Muse runs the committed bytes.
+
+### T1b-2 — Equivalence and adoption
 
 ```text
-Export your SCANNER-V1.1 implementation as plain files for human review and commit under scanner/src/muse/.
-Remove every credential, key, token, account ID, and endpoint secret. Replace them with environment-variable reads.
-List every file, its purpose, and confirm that no trading endpoint is referenced anywhere.
-Do not commit; I will review and commit.
+T1b-2: adopt the canonical repository copy.
+
+1. Report the current main HEAD SHA.
+2. Run, from a fresh checkout of the repository:
+   python scanner/tools/ast_equivalence.py scanner/src/muse/scanner_v11.py <your workspace scanner_v11.py>
+   python scanner/tools/ast_equivalence.py scanner/src/muse/t1_fixture_check.py <your workspace t1_fixture_check.py>
+   Both must print EQUAL. If either prints NOT EQUAL, stop and show the exact differing lines.
+3. If both are EQUAL, replace your workspace copies with the committed files byte for byte, and from now on run only the committed files.
+4. Run python -m unittest discover -s scanner/tests -v and python scanner/src/muse/t1_fixture_check.py on the committed files (expanded 21-symbol fixtures). Paste both summaries.
+5. Run python scanner/tools/implementation_ref.py scanner/src/muse/scanner_v11.py and report the result.
+Do not change any code. Do not write to GitHub. Do not trade.
 ```
 
-PASS: files contain no secrets, no order or trading endpoints, and the same `implementation_ref` as T1.
+PASS: both files EQUAL; unit tests OK (16); harness shows 21 symbols, 0 diffs, shortlist `BRKC, PULC, GAPF`; implementation_ref reported. This attempt also counts as T1 attempt 2.
+
+FAIL: any NOT EQUAL (a transcription error to fix in the repository, never in the fixtures).
+
+### T1c — Build and export the live pipeline (before T3)
+
+Only after T1b-2 passes. T2 may run before or after T1c.
+
+```text
+T1c: build the SCANNER-V1.1 live pipeline, then export it for review. Do not run a live scan yet.
+
+1. Create scanner/src/muse/run_scan_v11.py as the single entry point:
+   python scanner/src/muse/run_scan_v11.py --run-type LIVE|IN_SAMPLE_REPLAY --as-of YYYY-MM-DD
+2. Create scanner/src/muse/data_adapter.py that calls the read-only alpaca-market-data skill CLI. It must: use an exchange calendar; return completed SIP daily bars only (drop the in-progress session); request intraday SIP 5-minute bars with end = now - 20 minutes; drop extended-hours bars; never mix IEX and SIP volume; return dates as America/New_York session dates.
+3. run_scan_v11.py must: read the spec commit SHA and refuse to run if it differs from the accepted SHA passed on the command line; import rules only from scanner_v11.py; produce JSON that validates against scanner/OUTPUT_SCHEMA.json; fill implementation_files and implementation_ref using scanner/tools/implementation_ref.py over every executed file; write no raw vendor bars.
+4. No credentials in code, logs, or output. No order, trading, position, or account endpoints.
+5. Export run_scan_v11.py and data_adapter.py in full, each file base64-encoded (UTF-8, LF line endings) in its own code block, followed by its sha256 and line count, so formatting cannot be lost in transfer.
+Do not commit. Do not write to GitHub. Do not trade.
+```
+
+PASS: independent review finds no secrets or trading endpoints, the decoded files match the stated hashes, and the data rules above are implemented. Then the files are committed and T3 runs through `run_scan_v11.py` only.
 
 ---
 
@@ -82,7 +115,8 @@ FAIL: any r reported without method and n, or a confident explanation with no co
 ## T3 — In-sample replay of 2026-10-09 under V1.1 (weekend OK)
 
 ```text
-Run the full 21-symbol SCANNER-V1.1 scan on completed bars ending 2026-10-09.
+Run the full 21-symbol SCANNER-V1.1 scan on completed bars ending 2026-10-09, using only the committed entry point:
+python scanner/src/muse/run_scan_v11.py --run-type IN_SAMPLE_REPLAY --as-of 2026-10-09
 Set run_type = IN_SAMPLE_REPLAY. This run is not evidence for V1.1.
 
 Deliver:
@@ -104,7 +138,7 @@ FAIL: any label change without an attributed rule, or an unsourced earnings date
 ## T4 — Live-session acceptance (Monday 2026-10-12, after 10:30 ET)
 
 ```text
-Run SCANNER-V1.1 now with run_type = LIVE.
+Run SCANNER-V1.1 now with run_type = LIVE, using only the committed entry point scanner/src/muse/run_scan_v11.py. The report's implementation_ref must equal the accepted manifest.
 
 Before scanning, prove the data state:
 1. Market clock result and session label. Calendar check from an exchange source, and whether any related market (for example bonds) is closed today.

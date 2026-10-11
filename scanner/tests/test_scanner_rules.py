@@ -107,6 +107,11 @@ class GoldenFixtures(unittest.TestCase):
         self.assertIn("OVEREXTENDED", self.by_sym["BRKX"].flags)
         self.assertIn("close>=min_price", self.by_sym["CHEAP"].failed)
         self.assertIn("adv20_usd>=min_adv", self.by_sym["THIN"].failed)
+        self.assertEqual(self.by_sym["ZERO"].metrics["rs20_pp"], 0.0)
+        self.assertIn("rs20>0", self.by_sym["ZERO"].failed)
+        self.assertEqual(self.by_sym["PULV"].failed, ["rvol20>=0.8"])
+        self.assertIn("adv20_usd>=min_adv", self.by_sym["XLI"].failed)
+        self.assertIn("close>sma50", self.by_sym["BRKS"].failed)
 
     def test_benchmark_is_never_a_candidate(self):
         self.assertEqual(self.by_sym["SPY"].label, sr.BENCHMARK_ONLY)
@@ -129,6 +134,9 @@ class GoldenFixtures(unittest.TestCase):
         self.assertEqual(self.selection["shortlist"], self.expected["selection"]["shortlist"])
         skipped = {s["symbol"] for s in self.selection["skipped_for_correlation"]}
         self.assertEqual(skipped, {"TWIN"})
+        twin_dates = {b.date for b in self.bars["TWIN"]}
+        pulc_dates = {b.date for b in self.bars["PULC"]}
+        self.assertEqual(len(pulc_dates - twin_dates), len(mf.TWIN_GAP_POSITIONS))
 
 
 if __name__ == "__main__":

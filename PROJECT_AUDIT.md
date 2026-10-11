@@ -161,7 +161,9 @@ Present:
 ```text
 scanner/SCANNER_V1_1_SPEC.md
 scanner/reference/scanner_rules.py
-scanner/tests/ (14 passing unit tests, synthetic fixtures)
+scanner/tests/ (16 tests incl. 12 mutation subtests, 21 synthetic fixtures)
+scanner/src/muse/ (canonical copy of Muse's rules engine and harness)
+scanner/tools/ (AST equivalence, manifest implementation_ref)
 scanner/OUTPUT_SCHEMA.json
 scanner/MUSE_ACCEPTANCE_TESTS.md
 DECISION_LOG.md D-009 to D-017
@@ -170,8 +172,8 @@ DECISION_LOG.md D-009 to D-017
 Not yet done:
 
 ```text
-Muse production code committed under scanner/src/muse/ (T1b)
-Muse acceptance T0-T7
+Muse live entry point and data adapter (T1c)
+Muse acceptance T1b-2, T1c, T2-T7
 Outcome log populated from live runs
 Scheduled task
 ```

@@ -14,8 +14,10 @@ This directory defines an independent discovery workflow for Muse. It does not m
 ```text
 SCANNER_V1_1_SPEC.md       canonical rules (read this first)
 reference/scanner_rules.py executable definition of the rules (stdlib only)
+src/muse/                  canonical copy of Muse's code (GitHub is the source of truth)
+tools/                     ast_equivalence.py, implementation_ref.py
 reference/make_fixtures.py how the synthetic golden fixtures were built
-tests/                     unit tests + golden fixtures (synthetic, year 2099)
+tests/                     unit tests, mutation tests, 21 synthetic golden fixtures (year 2099)
 OUTPUT_SCHEMA.json         required shape of every run report
 MUSE_ACCEPTANCE_TESTS.md   T0-T7 gate before any scheduling
 ACCEPTANCE_LOG.md          result of every acceptance attempt

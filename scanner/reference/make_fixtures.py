@@ -42,8 +42,19 @@ INTENDED = {
     "THIN": sr.REJECT,              # dollar volume below 50M
     "SHORT": sr.INSUFFICIENT_DATA,  # fewer than 70 completed bars
     "STALE": sr.INSUFFICIENT_DATA,  # last bar date differs from benchmark
+    # Coverage additions (D-019): each one catches a specific wrong implementation
+    "ZERO": sr.WATCH,               # RS20 exactly 0.0 -> strict gate fails (catches >=)
+    "PULV": sr.RESEARCH_PASS,       # pullback, every confirmation except RVOL < 0.8
+    "GAPF": sr.CONFIRMED_SETUP,     # close > prev close but close < open (catches close>open)
+    "BRKS": sr.WATCH,               # above 20d high but below SMA50 (catches missing SMA50 gate)
+    "BARS60": sr.INSUFFICIENT_DATA, # 60 bars: between 55 and 70 (catches 55-bar minimum)
+    "XLI": sr.REJECT,               # thin sector ETF: no ETF liquidity exemption
+    "BRKO": sr.WATCH,               # breakout at 3.0-3.5 ATR (catches a loosened block)
 }
-INTENDED_SHORTLIST = ["BRKC", "PULC", "BRKE"]
+# TWIN also has 5 missing interior sessions: a positional-zip correlation
+# misaligns it with PULC, so TWIN would wrongly enter the shortlist.
+TWIN_GAP_POSITIONS = (40, 48, 56, 64, 72)
+INTENDED_SHORTLIST = ["BRKC", "PULC", "GAPF"]
 
 
 def weekdays(n: int, end: date = date(2099, 6, 30)) -> list[str]:
@@ -134,7 +145,7 @@ def build() -> dict[str, list[list]]:
     for i, r in enumerate(U["PULC"]):
         f = 0.6 * (1.0 - 0.0004 * i) * (1.0 + rng.gauss(0.0, 0.0015))
         twin.append([r[0], r[1] * f, r[2] * f, r[3] * f, r[4] * f, r[5] * 1.3])
-    U["TWIN"] = twin
+    U["TWIN"] = [r for i, r in enumerate(twin) if i not in TWIN_GAP_POSITIONS]
 
     # PULR: same shape as PULC (different seed) but last bar closes weak
     dr = [0.004] * 80 + [-0.006] * 9 + [0.0]
@@ -157,6 +168,62 @@ def build() -> dict[str, list[list]]:
     U["THIN"] = bars_from_closes(path(50, [0.002] * N, 0.01, 12), 12, 300_000)
     U["SHORT"] = bars_from_closes(path(70, [0.002] * N, 0.01, 13), 13)[-40:]
     U["STALE"] = bars_from_closes(path(70, [0.002] * N, 0.01, 14), 14)[:-1]
+
+    def r4(x: float) -> float:
+        return float(f"{x:.4f}")
+
+    # ZERO: pullback shape whose closes at t-20 and t are exactly 2x SPY's,
+    # so RS20 is exactly 0.0 in IEEE arithmetic (scaling by 2 is exact).
+    spy = U["SPY"]
+    dr = [0.004] * 69 + [-0.004] * 5 + [0.0] * 15 + [0.0]
+    rows = bars_from_closes(path(300, dr, 0.004, 15), 15, 6_000_000)
+    f = 2.0 * r4(spy[-21][4]) / rows[-21][4]
+    rows = [[r[0], r[1] * f, r[2] * f, r[3] * f, r[4] * f, r[5]] for r in rows]
+    rows[-21][4] = 2.0 * r4(spy[-21][4])
+    rows[-21][2] = max(rows[-21][2], rows[-21][4])
+    rows[-21][3] = min(rows[-21][3], rows[-21][4])
+    c_t = 2.0 * r4(spy[-1][4])
+    closes = [r[4] for r in rows[:-1]] + [c_t]
+    s20 = sum(closes[-20:]) / 20
+    set_last(rows, o=c_t * 0.998, c=c_t, h=c_t * 1.004, l=min(s20, c_t) * 0.992, v_mult=1.1)
+    rows[-1][4] = c_t
+    U["ZERO"] = rows
+
+    # PULV: PULC-like pullback, confirmed in every way except volume
+    dr = [0.004] * 80 + [-0.006] * 9 + [0.0]
+    rows = bars_from_closes(path(140, dr, 0.005, 16), 16)
+    closes = [r[4] for r in rows]
+    s20 = sum(closes[-20:-1] + [closes[-2]]) / 20
+    set_last(rows, o=s20 * 0.995, c=s20 * 1.012, h=s20 * 1.014, l=s20 * 0.993, v_mult=0.6)
+    U["PULV"] = rows
+
+    # GAPF: gap-up open, fades, still closes above prior close (V1.1 confirms)
+    dr = [0.0028] * 80 + [-0.006] * 9 + [0.0]
+    rows = bars_from_closes(path(110, dr, 0.005, 17), 17)
+    closes = [r[4] for r in rows]
+    s20 = sum(closes[-20:-1] + [closes[-2]]) / 20
+    set_last(rows, o=s20 * 1.020, c=s20 * 1.010, h=s20 * 1.022, l=s20 * 0.994, v_mult=1.1)
+    U["GAPF"] = rows
+
+    # BRKS: steep decline, 25-bar flat base, pop above the base but under SMA50
+    dr = [0.0] * 40 + [-0.008] * 25 + [0.0] * 24 + [0.0]
+    rows = bars_from_closes(path(95, dr, 0.003, 18), 18, wick=0.002)
+    ph = max(r[2] for r in rows[-21:-1])
+    set_last(rows, o=ph * 0.998, c=ph * 1.010, h=ph * 1.012, l=ph * 0.996, v_mult=2.0)
+    U["BRKS"] = rows
+
+    # BARS60: ordinary uptrend with only 60 completed bars
+    U["BARS60"] = bars_from_closes(path(55, [0.002] * N, 0.008, 19), 19)[-60:]
+
+    # BRKO: breakout whose extension sits between 3.0 and 3.5 ATR
+    dr = [0.002] * 60 + [0.0044] * 30
+    rows = bars_from_closes(path(70, dr, 0.006, 22), 22)
+    ph = max(r[2] for r in rows[-21:-1])
+    set_last(rows, o=ph * 0.997, c=ph * 1.010, h=ph * 1.011, l=ph * 0.995, v_mult=1.9)
+    U["BRKO"] = rows
+
+    # XLI: synthetic thin sector ETF (dates in 2099; not the real fund)
+    U["XLI"] = bars_from_closes(path(30, [0.001] * N, 0.006, 20), 20, 500_000)
     return U
 
 
