@@ -64,6 +64,8 @@ indicative
 
 Always identify which one was used.
 
+Vendor capability is not the same as installed capability. As of SCANNER-V1.1, Muse's installed `alpaca-market-data` skill is **stocks-only and read-only**. Option data listed above is an Alpaca capability that has not been integrated or tested, so scanner output is `OPTIONS_NOT_VERIFIED`.
+
 IEX equity data is not the same thing as consolidated SIP data.
 
 ## AlphaStocks

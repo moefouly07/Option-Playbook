@@ -24,6 +24,17 @@ The skill may use current Webull, Alpaca, AlphaStocks, and reliable web sources 
 
 Current data is evidence for the current example only. It is not historical validation of CIM-V1.
 
+## Discovery scanner
+
+Use:
+
+```text
+scanner/README.md
+scanner/SCANNER_V1_1_SPEC.md
+```
+
+for Muse scanner runs, scanner-rule questions, acceptance testing, and scanner report review. Scanner output is research only and is not a CIM-V1 signal.
+
 ## Future skills
 
 If the repository later contains materially different playbooks, create separate skills rather than expanding one skill indefinitely.

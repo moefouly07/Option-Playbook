@@ -1,5 +1,34 @@
 # Changelog
 
+## SCANNER-V1.1 — 2026-10-10
+
+Status: **PRE-REGISTERED / NOT VALIDATED / NOT SCHEDULED**
+
+No CIM-V1 behavioral rule changed. `strategy/` is untouched.
+
+Added:
+
+- `scanner/SCANNER_V1_1_SPEC.md` — canonical V1.1 rules with an explicit post-pilot honesty statement;
+- `scanner/reference/scanner_rules.py` — executable rule definition, standard library only;
+- `scanner/reference/make_fixtures.py` and `scanner/tests/` — synthetic golden fixtures and 14 unit tests;
+- `scanner/OUTPUT_SCHEMA.json` — required run-report shape;
+- `scanner/MUSE_ACCEPTANCE_TESTS.md` — staged T0–T7 gate before scheduling.
+
+Changed:
+
+- single label enum; `TRADE_READY` removed from scanner vocabulary (D-010);
+- SPY benchmark-only (D-011);
+- ATR-bounded SMA20 zone and pullback confirmation with volume floor (D-012);
+- positive RS required for pullbacks (D-013);
+- extension cap and block (D-014);
+- fixed, reported correlation method (D-015);
+- regime, catalysts, RSI, earnings, intraday status recorded only (D-016);
+- `scanner/MUSE_SETUP.md` schedule corrected from 09:00 ET to 10:30 ET on exchange trading days;
+- `scanner/SCANNER_V1_SPEC.md` marked superseded;
+- scanner linked from README, START_HERE, CURRENT_STATE, SKILL_ROUTER, ROADMAP, PROJECT_AUDIT, AGENTS, SECURITY, DATA_SOURCES.
+
+---
+
 ## Operational / education update — 2026-09-29
 
 No CIM-V1 behavioral rule changed.

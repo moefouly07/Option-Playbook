@@ -1,5 +1,16 @@
 # Security and Secrets
 
+## Repository visibility
+
+Treat this repository as **publicly readable**, whatever its current GitHub setting. Anything committed may be seen by anyone and kept in history.
+
+Therefore:
+
+- never commit credentials, account identifiers, or broker exports;
+- never commit raw vendor market data or full scanner run payloads containing vendor bars;
+- scanner reports may be committed only as summaries (labels, derived metrics, sources), with the spec version and commit SHA;
+- personal learner notes belong in `LEARNER_STATE.md` only if you accept that they are public.
+
 ## Never commit secrets
 
 Do not commit:
@@ -30,7 +41,7 @@ If account/order data are used for execution research:
 
 Historical market-data files may have redistribution restrictions.
 
-Do not commit vendor datasets merely because the repository is private.
+Do not commit vendor datasets, whether the repository is public or private.
 
 Store local/vendor data outside version control and document provenance in run metadata.
 

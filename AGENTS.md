@@ -32,6 +32,10 @@ DATA_CONTRACT.md
 - Preserve U.S. Eastern Time semantics and exchange-calendar handling.
 - Keep actual quotes/fills separate from modeled values.
 
+## Scanner code
+
+Scanner work follows `scanner/SCANNER_V1_1_SPEC.md`. Any scanner implementation must reproduce `scanner/tests/fixtures/expected_output.json` before its output is used. Never edit fixtures or expected outputs to make an implementation pass. Scanner code contains no trading or order endpoints.
+
 ## Implementation style
 
 Prefer small pure functions for:

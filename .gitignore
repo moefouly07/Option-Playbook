@@ -46,3 +46,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Scanner raw payloads (vendor data; summaries only may be committed)
+/scanner/runs/raw/
+/scanner/src/muse/**/config.json

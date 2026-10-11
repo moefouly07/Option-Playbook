@@ -79,6 +79,20 @@ live / delayed / indicative / unknown
 
 Do not use a current chart example as proof that the strategy has an edge.
 
+### Scanner / Muse request
+
+Read:
+
+```text
+CURRENT_STATE.md
+scanner/README.md
+scanner/SCANNER_V1_1_SPEC.md
+scanner/MUSE_ACCEPTANCE_TESTS.md
+DECISION_LOG.md (D-009 onward)
+```
+
+The scanner is separate from CIM-V1. Never let a scanner label become a CIM entry.
+
 ## New-chat shortcut
 
 If the assistant can access this GitHub repository, say:

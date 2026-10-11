@@ -55,3 +55,47 @@ Decision: Layer 1 tests the underlying signal. Layer 2 measures option translati
 Decision: use next-trading-day expiry first. 0DTE becomes a separate version/comparison after the signal is understood.
 
 Reason: reduce extreme gamma/theta interaction while debugging the strategy.
+
+---
+
+# Scanner decisions
+
+These entries govern the Muse discovery scanner only. None of them changes CIM-V1.0.
+
+## D-009 — SCANNER-V1.1 is a post-pilot revision, not an unbiased test
+
+Context: the V1.0 pilot ran on 2026-10-09 completed bars. After reviewing its output, Muse applied eight changes in its own workspace that were never committed to this repository. One of them demoted the name with the highest relative strength (AMD). A further review on 2026-10-10 found: SPY nominated as a candidate against itself, an undefined "SMA20 zone", a negative-relative-strength pullback passing, an extended breakout ranked first, regime breadth computed on the watchlist but described as market breadth, and an AAPL/SPY 60-day correlation of 0.05 that needs forensic review.
+
+Decision: all V1.1 rules are declared as designed after seeing V1.0 output. The 2026-10-09 data is in-sample for V1.1 and is not evidence for it. The first out-of-sample observation is the first live V1.1 run after this commit. V1.1 parameters are frozen at commit; any change creates V1.2.
+
+## D-010 — One label enum; TRADE_READY removed from the scanner
+
+Decision: labels are `CONFIRMED_SETUP`, `RESEARCH_PASS`, `WATCH`, `REJECT`, `INSUFFICIENT_DATA`, `BENCHMARK`. `TRADE_READY` was assigned on delayed, completed-bar data and implied an entry the spec forbids. It is removed. Trade readiness, if ever built, is a separate stage requiring live executable quotes, verified option data, and human approval.
+
+## D-011 — SPY is benchmark only
+
+Decision: SPY's relative strength against itself is zero by definition and it anchors the regime. It is labeled `BENCHMARK` and can never be a candidate.
+
+## D-012 — Pullback structure and confirmation are bounded by ATR
+
+Decision: zone = SMA20 ± 0.5 × ATR14 (Wilder, daily). Structure needs close and SMA20 above SMA50, a low inside or below the zone's upper edge within the last three sessions, and close not below the zone's lower edge. Confirmation needs an up close, range position ≥ 0.5, today's low ≤ zone upper edge, close ≥ SMA20, and RVOL20 ≥ 0.8. The volume floor addresses a V1.0 case confirmed on roughly half-normal volume.
+
+## D-013 — Pullbacks require positive relative strength
+
+Decision: RS20 versus SPY must be strictly greater than zero for a pullback to qualify; otherwise `WATCH`. Zero is a valid value and fails the gate; it is never treated as missing.
+
+## D-014 — Extension penalty for any setup
+
+Decision: ext = (close − SMA20) / ATR14. Above 2.0 adds `EXTENDED` and caps the label at `RESEARCH_PASS`. Above 3.0 adds `OVEREXTENDED` and the label becomes `WATCH`. RSI ≥ 75 is flagged but recorded only.
+
+## D-015 — Correlation method is fixed and reported
+
+Decision: Pearson correlation of simple daily returns computed per series on its own consecutive completed bars, inner-joined on date, last 60 joined dates, minimum 55 joined returns. Every value reports method, n, first and last date. |r| ≥ 0.70 against an already-selected name skips the candidate. Prices are never correlated directly. The V1.0 AAPL/SPY value is under forensic review (acceptance test T2); a synthetic unit test shows how zipping returns by position after date gaps can produce a near-zero value.
+
+## D-016 — Context fields are recorded only in V1.1
+
+Decision: regime (named `watchlist_breadth`), catalysts, RSI, earnings proximity, and intraday status are recorded but cannot change any label. Catalysts need exact publication timestamps, source tier, and URL; aggregator figures stay `UNVERIFIED` until matched to filings. Options remain `OPTIONS_NOT_VERIFIED`.
+
+## D-017 — Reference implementation and golden fixtures gate production code
+
+Decision: `scanner/reference/scanner_rules.py` is the executable definition of V1.1. Synthetic fixtures (year 2099) with a designed-intent table and `expected_output.json` must be reproduced exactly by any production implementation before its live output is trusted. Scheduling waits for `scanner/MUSE_ACCEPTANCE_TESTS.md` T0–T6 and a human sign-off entry here.

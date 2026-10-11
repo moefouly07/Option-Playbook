@@ -130,6 +130,19 @@ SMA, EMA, RSI, previous-day levels, premarket levels, and event context are also
 - `templates/BACKTEST_RUN_REPORT.md`
 - `templates/NEW_CHAT_BOOTSTRAP.md`
 
+### Discovery scanner
+
+Separate, research-only track for Muse:
+
+```text
+scanner/README.md
+scanner/SCANNER_V1_1_SPEC.md        SCANNER-V1.1, pre-registered, not validated
+scanner/MUSE_ACCEPTANCE_TESTS.md    gate before any scheduling
+python3 -m unittest discover -s scanner/tests -v
+```
+
+The scanner never modifies CIM-V1.0 and never executes trades.
+
 ## Research architecture
 
 The project deliberately separates:

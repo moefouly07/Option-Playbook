@@ -154,6 +154,30 @@ Backtest implementation
 → historical Layer 1 run
 ```
 
+## Scanner addendum — 2026-10-10
+
+Present:
+
+```text
+scanner/SCANNER_V1_1_SPEC.md
+scanner/reference/scanner_rules.py
+scanner/tests/ (14 passing unit tests, synthetic fixtures)
+scanner/OUTPUT_SCHEMA.json
+scanner/MUSE_ACCEPTANCE_TESTS.md
+DECISION_LOG.md D-009 to D-017
+```
+
+Not yet done:
+
+```text
+Muse production code committed under scanner/src/muse/ (T1b)
+Muse acceptance T0-T7
+Outcome log populated from live runs
+Scheduled task
+```
+
+Verdict: specified and testable; not validated; no edge claimed.
+
 ## Audit principle
 
 Do not add files merely to make the repository look larger.

@@ -98,3 +98,17 @@ alternative time windows
 ```
 
 Each material rule change requires a new version and out-of-sample validation.
+
+## Parallel track — Discovery scanner
+
+Independent of the CIM phases above. Never changes CIM-V1.
+
+```text
+S1  SCANNER-V1.1 acceptance (T0-T7)          ACTIVE
+S2  Scheduled daily research runs + outcome log
+S3  Authoritative full-market universe (Phase-2 discovery)
+S4  Licensed option-chain validation with its own acceptance test
+S5  Prospective evaluation of logged outcomes (pre-registered horizons +1/+5/+10)
+```
+
+Each rule change is a new scanner version with a decision-log entry.

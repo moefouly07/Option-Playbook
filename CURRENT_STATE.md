@@ -78,6 +78,20 @@ templates/
 
 These improve operation, teaching, and implementation safety without changing frozen CIM-V1 behavior.
 
+## Discovery scanner (separate track)
+
+```text
+Scanner:  Muse discovery scanner
+Version:  SCANNER-V1.1
+Status:   PRE-REGISTERED / NOT VALIDATED / NOT SCHEDULED
+Spec:     scanner/SCANNER_V1_1_SPEC.md
+Gate:     scanner/MUSE_ACCEPTANCE_TESTS.md (T0-T7)
+```
+
+The scanner is research-only discovery on a fixed 21-symbol watchlist. It never changes CIM-V1.0 and never authorizes trades. V1.1 rules were written after the V1.0 pilot (DECISION_LOG D-009); 2026-10-09 data is in-sample.
+
+Next scanner action: Muse acceptance T0-T3 over the weekend, T4 live after 10:30 ET on 2026-10-12, then T5-T7. No recurring task before human sign-off.
+
 ## Version-control rule
 
 Do not edit frozen V1 behavior after observing performance.
