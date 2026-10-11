@@ -18,6 +18,7 @@ src/muse/                  canonical copy of Muse's code (GitHub is the source o
 tools/                     ast_equivalence.py, implementation_ref.py
 reference/make_fixtures.py how the synthetic golden fixtures were built
 tests/                     unit tests, mutation tests, 21 synthetic golden fixtures (year 2099)
+tests/pipeline_sim/        end-to-end live-pipeline simulation with a fake read-only CLI
 OUTPUT_SCHEMA.json         required shape of every run report
 MUSE_ACCEPTANCE_TESTS.md   T0-T7 gate before any scheduling
 ACCEPTANCE_LOG.md          result of every acceptance attempt

@@ -142,3 +142,25 @@ The low value is real in this data. It is dominated by AAPL-specific sessions: t
 What stands: the V1.0 positional method is unsafe in principle because it has no date check; the V1.1 method and fixtures already guard against it. The criticism of the V1.0 "diversification intact" claim also stands, because low pairwise correlation over one window does not remove shared broad-market beta in a selloff.
 
 FUTURE RESEARCH (not V1.1, not active): event-robust correlation, for example excluding earnings sessions or using rank correlation. Any adoption is a new scanner version.
+
+## D-021 - T1c review: live-pipeline fixes and pre-registered history window
+
+Date: 2026-10-11 (ET). No classification rule, parameter, label, or ranking changed.
+
+Muse exported `run_scan_v11.py` (sha256 7016fa88...) and `data_adapter.py` (sha256 88adb59b...) as base64; both decoded byte-exact. Review found no credentials, no trading or account endpoints, and no shell invocation. An end-to-end simulation against a fake read-only CLI found four defects:
+
+1. Stale data accepted silently: when the vendor lacked the latest session for every symbol, the run still reported the expected session date and produced a different shortlist.
+2. The spec gate used `git rev-parse HEAD`, so any unrelated commit (an acceptance-log row) refused the run, which would train operators to pass whatever HEAD is current.
+3. Uncommitted edits to the rules engine ran without refusal.
+4. The outcome log lived inside the repository, duplicated rows on repeated runs, and mixed replay rows with live rows.
+
+Decision (applied to the canonical copies in `scanner/src/muse/`):
+
+- Refuse if SPY's latest completed bar is not the expected session; other stale or malformed symbols become INSUFFICIENT_DATA and are named in `data_quality`. Bars must have strictly increasing unique dates, finite values, and consistent OHLC.
+- `spec_commit_sha` is the last commit that changed `SCANNER_V1_1_SPEC.md` or `OUTPUT_SCHEMA.json`.
+- Refuse on uncommitted changes to tracked files under `scanner/`, and on any `implementation_ref` other than `--accepted-impl-ref`.
+- Outcome logs default to git-ignored `scanner/runs/`, one file for LIVE and one for replay, one row per (session, symbol).
+- Error text from the CLI is redacted of token-like strings; Windows needs the `tzdata` package.
+- The daily history window (130 completed sessions) is pre-registered in the spec, because Wilder ATR and RSI depend on the seeding length.
+
+`scanner/tests/pipeline_sim/` simulates the pipeline end to end (13 scenarios) without network or vendor data. Muse reviews the diff against its export and adopts the canonical files in T1c-2.

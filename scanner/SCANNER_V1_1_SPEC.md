@@ -42,10 +42,12 @@ This is not a full-market scan and must never be described as one.
 - Timezone `America/New_York`. Use the actual exchange calendar, including holidays and early closes.
 - Daily classification uses **completed** consolidated SIP daily bars only. During a live session, today's daily bar is incomplete and is excluded; the latest completed daily bar is the previous session.
 - Minimum history: 70 completed daily bars per symbol and for SPY. Otherwise `INSUFFICIENT_DATA`.
+- History window: each run requests the 130 completed daily sessions ending at the latest completed session and computes every indicator over that window (D-021). Wilder ATR and RSI depend on the seeding length, so the window is fixed.
+- Freshness: if SPY's latest completed bar is not the expected session, the run refuses. Any other symbol whose latest bar differs, or whose bars fail integrity checks, is `INSUFFICIENT_DATA` and named in `data_quality`.
 - A symbol whose latest completed daily date differs from SPY's is `INSUFFICIENT_DATA`.
 - Intraday: completed RTH SIP 5-minute bars, requested with `end = now − 20 minutes`. Extended-hours bars removed. Intraday data is **recorded only** in V1.1 (section 9).
 - IEX quotes are single-venue. Never mix IEX and SIP volume. Never treat delayed data as an execution signal.
-- Every report records the spec commit SHA it ran against.
+- Every report records `spec_commit_sha`: the last commit that changed this spec or `OUTPUT_SCHEMA.json`.
 
 ## 4. Labels (single enum, used everywhere)
 

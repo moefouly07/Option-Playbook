@@ -14,10 +14,12 @@ Follow `scanner/MUSE_ACCEPTANCE_TESTS.md` T0 to T7 in order. No recurring task b
 
 1. Confirm exchange calendar and session from an exchange source.
 2. Fetch completed SIP daily bars (latest completed session) and same-day completed RTH SIP 5-minute bars with `end = now - 20 min`.
-3. Classify all 21 symbols with V1.1; select at most three; or `NO_CANDIDATES`.
+3. Run only the committed entry point:
+   `python scanner/src/muse/run_scan_v11.py --run-type LIVE --as-of <today ET> --accepted-spec-sha <accepted> --accepted-impl-ref <accepted>`
+   It classifies all 21 symbols, selects at most three or returns `NO_CANDIDATES`, and refuses on a spec, code, or data-freshness mismatch.
 4. Add recorded-only fields: regime, catalysts with exact timestamps, earnings status, intraday status, `OPTIONS_NOT_VERIFIED`.
 5. Validate the report against `scanner/OUTPUT_SCHEMA.json`.
-6. Append outcome-log rows (spec section 11).
+6. Outcome-log rows are appended automatically to git-ignored `scanner/runs/outcome_log_live.csv` (one row per session and symbol).
 7. Notify the user with the verdict, shortlist, and data-quality notes.
 
 ## Stop conditions

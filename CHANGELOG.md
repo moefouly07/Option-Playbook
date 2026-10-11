@@ -1,5 +1,11 @@
 # Changelog
 
+## Live pipeline review — 2026-10-11
+
+No classification rule changed. Added Muse's reviewed live pipeline (`run_scan_v11.py`, `data_adapter.py`) with freshness, spec, clean-tree and implementation gates; outcome logs moved to git-ignored `scanner/runs/`; pre-registered 130-session history window; `scanner/tests/pipeline_sim/` (13 scenarios); acceptance step T1c-2 (D-021).
+
+---
+
 ## Test hardening — 2026-10-11
 
 No rule changed. Fixtures 14 → 21 synthetic symbols; 12-mutant sensitivity test; canonical `scanner/src/muse/` copy of Muse's rules engine and harness; `scanner/tools/ast_equivalence.py` and `scanner/tools/implementation_ref.py`; manifest-based `implementation_ref`; acceptance steps T1b-2 and T1c (D-019).

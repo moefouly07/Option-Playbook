@@ -58,3 +58,6 @@ Thumbs.db
 # Local transfer files
 *.patch
 *.zip
+
+# Scanner run outputs (outcome logs, reports)
+/scanner/runs/

@@ -93,6 +93,27 @@ PASS: independent review finds no secrets or trading endpoints, the decoded file
 
 ---
 
+### T1c result and T1c-2 — adopt the reviewed pipeline
+
+Attempt 1 (2026-10-11): CHANGES REQUIRED (D-021). The reviewed and fixed files are committed as canonical copies, with `scanner/tests/pipeline_sim/` as the pipeline gate.
+
+```text
+T1c-2: adopt the reviewed live pipeline. Do not run a scan.
+
+1. Report the current main HEAD SHA and the accepted spec SHA:
+   git log -1 --format=%H -- scanner/SCANNER_V1_1_SPEC.md scanner/OUTPUT_SCHEMA.json
+2. Diff your workspace run_scan_v11.py and data_adapter.py against scanner/src/muse/. Confirm every change is one of the D-021 fixes. If any change breaks the real skill CLI contract (ok, symbols, bars, t_et, o/h/l/c/v, complete, --feed/--timeframe/--bars/--start/--end/--adjustment), say exactly which, with evidence. Do not edit the committed files.
+3. If there is no objection, replace your workspace copies with the committed files byte for byte and run only the committed files from now on.
+4. Run, from a fresh checkout:
+   python -m unittest discover -s scanner/tests
+   python scanner/tests/pipeline_sim/run_pipeline_sim.py
+   python scanner/tools/implementation_ref.py scanner/src/muse/run_scan_v11.py scanner/src/muse/data_adapter.py scanner/src/muse/scanner_v11.py scanner/tools/implementation_ref.py
+5. Real-CLI contract probe (no scan, no report): call data_adapter.fetch_daily_bars(["SPY"], date(2026, 10, 9)) and print the bar count, first and last date, and data_adapter.daily_bar_issue() on the result.
+Do not write to GitHub. Do not trade.
+```
+
+PASS: no contract objection (or a documented one), unit tests OK, pipeline_sim 13/13, implementation_ref equals the value recorded in the acceptance log, probe returns 130 SPY bars ending 2026-10-09 with no integrity issue.
+
 ## T2 — Correlation forensic (real data, weekend OK)
 
 ```text
@@ -116,7 +137,7 @@ FAIL: any r reported without method and n, or a confident explanation with no co
 
 ```text
 Run the full 21-symbol SCANNER-V1.1 scan on completed bars ending 2026-10-09, using only the committed entry point:
-python scanner/src/muse/run_scan_v11.py --run-type IN_SAMPLE_REPLAY --as-of 2026-10-09
+python scanner/src/muse/run_scan_v11.py --run-type IN_SAMPLE_REPLAY --as-of 2026-10-09 --accepted-spec-sha <accepted spec SHA> --accepted-impl-ref <accepted implementation_ref>
 Set run_type = IN_SAMPLE_REPLAY. This run is not evidence for V1.1.
 
 Deliver:
