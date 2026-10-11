@@ -1,5 +1,11 @@
 # Changelog
 
+## Deployment correction — 2026-10-11
+
+No rule changed. Completed the SCANNER-V1.1 upload: committed the `scanner/` tree (spec, reference implementation, tests, fixtures, schema, acceptance tests), removed the stray root `scanner-v1.1.patch` and root `MUSE_ACCEPTANCE_TESTS.md`, added `scanner/ACCEPTANCE_LOG.md` and D-018.
+
+---
+
 ## SCANNER-V1.1 — 2026-10-10
 
 Status: **PRE-REGISTERED / NOT VALIDATED / NOT SCHEDULED**

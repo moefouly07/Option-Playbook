@@ -1,15 +1,33 @@
-# Muse Scanner — Beginner Operations Runbook
+# Muse Scanner — Operations Runbook
 
-This runbook is for the Muse environment; documenting a schedule is NOT the same as installing one.
+Documenting a schedule is NOT the same as installing one.
 
-## One-off pilot
-Ask Muse to read `scanner/README.md`, `scanner/SCANNER_V1_SPEC.md`, and `scanner/MUSE_RUNBOOK.md`. Inspect the installed `alpaca-market-data` skill. Check access and permissions before code edits. Implement the V1 constraints using the allowed read-only stock-data API; add no credential exposure or trading endpoints. Run a one-off scan and produce an honest report (including NO TRADE if necessary). Distinguish historical SIP >=15min delay from live IEX single venue. Report what worked and failed.
+## Before any run
 
-## After pilot acceptance — schedule
-Request an autonomous recurring Muse task at 10:30 America/New_York on *US equity market sessions* (not blanket weekdays). Confirm the task in Muse's UI and its notifications. It should read the scanner spec on every run, generate one brief report or NO TRADE, and record data provenance. Do not execute trades or recommend contracts with no option data. Disable on repeated authentication failure or noisy data anomalies; report the failure.
+Read `scanner/SCANNER_V1_1_SPEC.md` from GitHub and record the commit SHA. If the SHA differs from the last accepted SHA, stop: a spec change needs a new acceptance pass.
 
-## Audit fields per report
-`scan_started_at_et`, `latest_completed_sip_bar_et`, `source_feed`, `market_session`, `universe_count`, `processed_count`, `symbols_with_data_gaps`, `candidates`, `no_trade_reason`, `audit_notes`.
+## Acceptance (once per spec version)
+
+Follow `scanner/MUSE_ACCEPTANCE_TESTS.md` T0 to T7 in order. No recurring task before T7.
+
+## Each scheduled run (after T7)
+
+1. Confirm exchange calendar and session from an exchange source.
+2. Fetch completed SIP daily bars (latest completed session) and same-day completed RTH SIP 5-minute bars with `end = now - 20 min`.
+3. Classify all 21 symbols with V1.1; select at most three; or `NO_CANDIDATES`.
+4. Add recorded-only fields: regime, catalysts with exact timestamps, earnings status, intraday status, `OPTIONS_NOT_VERIFIED`.
+5. Validate the report against `scanner/OUTPUT_SCHEMA.json`.
+6. Append outcome-log rows (spec section 11).
+7. Notify the user with the verdict, shortlist, and data-quality notes.
+
+## Stop conditions
+
+Disable the task and notify the user on: repeated authentication failure, missing same-day SIP data, schema-validation failure, or a spec SHA change.
+
+## Never
+
+Place orders, name option contracts, write to GitHub, print credentials, or apply a parameter change without a new scanner version.
 
 ## Expansion later
-Phase 2: obtain an authoritative, current and reproducible all-US-listed universe source; apply deterministic price/dollar-volume screening; process batches with endpoint limits; avoid survivorship and pagination biases. Phase 3: option-chain validation only after reliable and appropriately licensed options data. These phases are not active.
+
+Phase 2: an authoritative, reproducible all-US-listed universe with deterministic screening and survivorship-safe handling. Phase 3: option-chain validation only with reliable, licensed options data and its own acceptance test. Neither is active.

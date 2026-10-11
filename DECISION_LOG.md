@@ -99,3 +99,18 @@ Decision: regime (named `watchlist_breadth`), catalysts, RSI, earnings proximity
 ## D-017 — Reference implementation and golden fixtures gate production code
 
 Decision: `scanner/reference/scanner_rules.py` is the executable definition of V1.1. Synthetic fixtures (year 2099) with a designed-intent table and `expected_output.json` must be reproduced exactly by any production implementation before its live output is trusted. Scheduling waits for `scanner/MUSE_ACCEPTANCE_TESTS.md` T0–T6 and a human sign-off entry here.
+
+## D-018 — T0 findings: undisclosed V1.0 gates and incomplete deployment
+
+Date: 2026-10-11 (ET).
+
+Deployment: commit `84f23fb` uploaded root documents and the patch file itself, but not the `scanner/` changes. Root documents therefore pointed to V1.1 files that did not exist. Muse read the V1.1 content from inside the patch and said so. Correction: the `scanner/` tree is committed, the stray root `scanner-v1.1.patch` and root `MUSE_ACCEPTANCE_TESTS.md` duplicate are removed. T0 must be re-confirmed against the corrected commit.
+
+Findings reported by Muse in T0 (self-reported, not yet verified against exported code):
+
+- V1.0 workspace code applied gates that the V1.0 pilot report did not disclose: pullback RSI band 40–65, breakout RSI ≤ 80, a sell-climax filter (RVOL ≤ 1.5 on pullbacks), a ±3% SMA20 zone, close > open as reversal, 55-bar minimum history, and an ETF exemption from the dollar-volume screen.
+- Relative strength was a ratio without date alignment.
+- RVOL included the current bar in its own baseline, which compresses spikes toward 1.0.
+- Correlation was a positional zip of 60 returns with no date join. This matches the synthetic reproduction in `test_join_on_dates_not_positions` and is the leading explanation for the V1.0 AAPL/SPY value of 0.05. T2 must still demonstrate it with code.
+
+Consequence: the V1.0 pilot report described its own logic incompletely, so its outputs cannot be reproduced from its text. This confirms the D-017 gate: no implementation is trusted from its description, only from reproducing the golden fixtures and exporting its code (T1b).

@@ -1,0 +1,3330 @@
+From 89a2368723b9aebe34cd2459d3e6f5f7a5afb3f8 Mon Sep 17 00:00:00 2001
+From: Claude review <noreply@anthropic.com>
+Date: Sun, 11 Oct 2026 04:40:38 +0000
+Subject: [PATCH] scanner: complete V1.1 deployment; log T0 findings (D-018)
+
+- commit missing scanner/ tree (spec, reference impl, tests, fixtures, schema, acceptance tests)
+- remove root MUSE_ACCEPTANCE_TESTS.md duplicate
+- add scanner/ACCEPTANCE_LOG.md and D-018
+Delete root scanner-v1.1.patch separately (git rm). No rule changed.
+---
+ CHANGELOG.md                                  |   6 +
+ DECISION_LOG.md                               |  15 +
+ scanner/ACCEPTANCE_LOG.md                     |  17 +
+ .../MUSE_ACCEPTANCE_TESTS.md                  |   0
+ scanner/MUSE_RUNBOOK.md                       |  36 +-
+ scanner/MUSE_SETUP.md                         |  24 +-
+ scanner/OUTPUT_SCHEMA.json                    | 131 +++++
+ scanner/README.md                             |  56 +-
+ scanner/SCANNER_RULES.md                      |  30 +-
+ scanner/SCANNER_V1_1_SPEC.md                  | 171 ++++++
+ scanner/SCANNER_V1_SPEC.md                    |   4 +
+ scanner/reference/make_fixtures.py            | 217 +++++++
+ scanner/reference/scanner_rules.py            | 438 +++++++++++++++
+ scanner/tests/fixtures/README.md              |   7 +
+ scanner/tests/fixtures/bars/BRKC.csv          |  91 +++
+ scanner/tests/fixtures/bars/BRKE.csv          |  91 +++
+ scanner/tests/fixtures/bars/BRKX.csv          |  91 +++
+ scanner/tests/fixtures/bars/CHEAP.csv         |  91 +++
+ scanner/tests/fixtures/bars/DOWN.csv          |  91 +++
+ scanner/tests/fixtures/bars/PULC.csv          |  91 +++
+ scanner/tests/fixtures/bars/PULN.csv          |  91 +++
+ scanner/tests/fixtures/bars/PULR.csv          |  91 +++
+ scanner/tests/fixtures/bars/QQQ.csv           |  91 +++
+ scanner/tests/fixtures/bars/SHORT.csv         |  41 ++
+ scanner/tests/fixtures/bars/SPY.csv           |  91 +++
+ scanner/tests/fixtures/bars/STALE.csv         |  90 +++
+ scanner/tests/fixtures/bars/THIN.csv          |  91 +++
+ scanner/tests/fixtures/bars/TWIN.csv          |  91 +++
+ scanner/tests/fixtures/expected_output.json   | 529 ++++++++++++++++++
+ scanner/tests/test_scanner_rules.py           | 135 +++++
+ 30 files changed, 2992 insertions(+), 47 deletions(-)
+ create mode 100644 scanner/ACCEPTANCE_LOG.md
+ rename MUSE_ACCEPTANCE_TESTS.md => scanner/MUSE_ACCEPTANCE_TESTS.md (100%)
+ create mode 100644 scanner/OUTPUT_SCHEMA.json
+ create mode 100644 scanner/SCANNER_V1_1_SPEC.md
+ create mode 100644 scanner/reference/make_fixtures.py
+ create mode 100644 scanner/reference/scanner_rules.py
+ create mode 100644 scanner/tests/fixtures/README.md
+ create mode 100644 scanner/tests/fixtures/bars/BRKC.csv
+ create mode 100644 scanner/tests/fixtures/bars/BRKE.csv
+ create mode 100644 scanner/tests/fixtures/bars/BRKX.csv
+ create mode 100644 scanner/tests/fixtures/bars/CHEAP.csv
+ create mode 100644 scanner/tests/fixtures/bars/DOWN.csv
+ create mode 100644 scanner/tests/fixtures/bars/PULC.csv
+ create mode 100644 scanner/tests/fixtures/bars/PULN.csv
+ create mode 100644 scanner/tests/fixtures/bars/PULR.csv
+ create mode 100644 scanner/tests/fixtures/bars/QQQ.csv
+ create mode 100644 scanner/tests/fixtures/bars/SHORT.csv
+ create mode 100644 scanner/tests/fixtures/bars/SPY.csv
+ create mode 100644 scanner/tests/fixtures/bars/STALE.csv
+ create mode 100644 scanner/tests/fixtures/bars/THIN.csv
+ create mode 100644 scanner/tests/fixtures/bars/TWIN.csv
+ create mode 100644 scanner/tests/fixtures/expected_output.json
+ create mode 100644 scanner/tests/test_scanner_rules.py
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4da2116..63bfdfa 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # Changelog
+ 
++## Deployment correction — 2026-10-11
++
++No rule changed. Completed the SCANNER-V1.1 upload: committed the `scanner/` tree (spec, reference implementation, tests, fixtures, schema, acceptance tests), removed the stray root `scanner-v1.1.patch` and root `MUSE_ACCEPTANCE_TESTS.md`, added `scanner/ACCEPTANCE_LOG.md` and D-018.
++
++---
++
+ ## SCANNER-V1.1 — 2026-10-10
+ 
+ Status: **PRE-REGISTERED / NOT VALIDATED / NOT SCHEDULED**
+diff --git a/DECISION_LOG.md b/DECISION_LOG.md
+index 743ff24..3804a15 100644
+--- a/DECISION_LOG.md
++++ b/DECISION_LOG.md
+@@ -99,3 +99,18 @@ Decision: regime (named `watchlist_breadth`), catalysts, RSI, earnings proximity
+ ## D-017 — Reference implementation and golden fixtures gate production code
+ 
+ Decision: `scanner/reference/scanner_rules.py` is the executable definition of V1.1. Synthetic fixtures (year 2099) with a designed-intent table and `expected_output.json` must be reproduced exactly by any production implementation before its live output is trusted. Scheduling waits for `scanner/MUSE_ACCEPTANCE_TESTS.md` T0–T6 and a human sign-off entry here.
++
++## D-018 — T0 findings: undisclosed V1.0 gates and incomplete deployment
++
++Date: 2026-10-11 (ET).
++
++Deployment: commit `84f23fb` uploaded root documents and the patch file itself, but not the `scanner/` changes. Root documents therefore pointed to V1.1 files that did not exist. Muse read the V1.1 content from inside the patch and said so. Correction: the `scanner/` tree is committed, the stray root `scanner-v1.1.patch` and root `MUSE_ACCEPTANCE_TESTS.md` duplicate are removed. T0 must be re-confirmed against the corrected commit.
++
++Findings reported by Muse in T0 (self-reported, not yet verified against exported code):
++
++- V1.0 workspace code applied gates that the V1.0 pilot report did not disclose: pullback RSI band 40–65, breakout RSI ≤ 80, a sell-climax filter (RVOL ≤ 1.5 on pullbacks), a ±3% SMA20 zone, close > open as reversal, 55-bar minimum history, and an ETF exemption from the dollar-volume screen.
++- Relative strength was a ratio without date alignment.
++- RVOL included the current bar in its own baseline, which compresses spikes toward 1.0.
++- Correlation was a positional zip of 60 returns with no date join. This matches the synthetic reproduction in `test_join_on_dates_not_positions` and is the leading explanation for the V1.0 AAPL/SPY value of 0.05. T2 must still demonstrate it with code.
++
++Consequence: the V1.0 pilot report described its own logic incompletely, so its outputs cannot be reproduced from its text. This confirms the D-017 gate: no implementation is trusted from its description, only from reproducing the golden fixtures and exporting its code (T1b).
+diff --git a/scanner/ACCEPTANCE_LOG.md b/scanner/ACCEPTANCE_LOG.md
+new file mode 100644
+index 0000000..879343f
+--- /dev/null
++++ b/scanner/ACCEPTANCE_LOG.md
+@@ -0,0 +1,17 @@
++# SCANNER-V1.1 Acceptance Log
++
++One row per attempt. Never delete rows; add a new attempt instead.
++
++| Test | Attempt | Date ET | Spec commit | Result | Evidence / notes |
++| --- | --- | --- | --- | --- | --- |
++| T0 | 1 | 2026-10-11 | 84f23fb | BLOCKED (deployment) | Muse behaved correctly: exact SHA, exact PARAMS, complete gap table, no code changes. Spec files were missing from `scanner/` because only root docs and the patch file were uploaded. Muse read V1.1 from the patch and disclosed it. See D-018. |
++| T0 | 2 | | | | Re-confirm paths and SHA after corrective commit. |
++| T1 | 1 | | | | |
++| T1b | 1 | | | | |
++| T2 | 1 | | | | |
++| T3 | 1 | | | | |
++| T4 | 1 | | | | |
++| T4b | 1 | | | | |
++| T5a-f | 1 | | | | |
++| T6 | 1 | | | | |
++| T7 | sign-off | | | | Human sign-off required before any recurring task. |
+diff --git a/MUSE_ACCEPTANCE_TESTS.md b/scanner/MUSE_ACCEPTANCE_TESTS.md
+similarity index 100%
+rename from MUSE_ACCEPTANCE_TESTS.md
+rename to scanner/MUSE_ACCEPTANCE_TESTS.md
+diff --git a/scanner/MUSE_RUNBOOK.md b/scanner/MUSE_RUNBOOK.md
+index f7e4309..a9ddd1e 100644
+--- a/scanner/MUSE_RUNBOOK.md
++++ b/scanner/MUSE_RUNBOOK.md
+@@ -1,15 +1,33 @@
+-# Muse Scanner — Beginner Operations Runbook
++# Muse Scanner — Operations Runbook
+ 
+-This runbook is for the Muse environment; documenting a schedule is NOT the same as installing one.
++Documenting a schedule is NOT the same as installing one.
+ 
+-## One-off pilot
+-Ask Muse to read `scanner/README.md`, `scanner/SCANNER_V1_SPEC.md`, and `scanner/MUSE_RUNBOOK.md`. Inspect the installed `alpaca-market-data` skill. Check access and permissions before code edits. Implement the V1 constraints using the allowed read-only stock-data API; add no credential exposure or trading endpoints. Run a one-off scan and produce an honest report (including NO TRADE if necessary). Distinguish historical SIP >=15min delay from live IEX single venue. Report what worked and failed.
++## Before any run
+ 
+-## After pilot acceptance — schedule
+-Request an autonomous recurring Muse task at 10:30 America/New_York on *US equity market sessions* (not blanket weekdays). Confirm the task in Muse's UI and its notifications. It should read the scanner spec on every run, generate one brief report or NO TRADE, and record data provenance. Do not execute trades or recommend contracts with no option data. Disable on repeated authentication failure or noisy data anomalies; report the failure.
++Read `scanner/SCANNER_V1_1_SPEC.md` from GitHub and record the commit SHA. If the SHA differs from the last accepted SHA, stop: a spec change needs a new acceptance pass.
+ 
+-## Audit fields per report
+-`scan_started_at_et`, `latest_completed_sip_bar_et`, `source_feed`, `market_session`, `universe_count`, `processed_count`, `symbols_with_data_gaps`, `candidates`, `no_trade_reason`, `audit_notes`.
++## Acceptance (once per spec version)
++
++Follow `scanner/MUSE_ACCEPTANCE_TESTS.md` T0 to T7 in order. No recurring task before T7.
++
++## Each scheduled run (after T7)
++
++1. Confirm exchange calendar and session from an exchange source.
++2. Fetch completed SIP daily bars (latest completed session) and same-day completed RTH SIP 5-minute bars with `end = now - 20 min`.
++3. Classify all 21 symbols with V1.1; select at most three; or `NO_CANDIDATES`.
++4. Add recorded-only fields: regime, catalysts with exact timestamps, earnings status, intraday status, `OPTIONS_NOT_VERIFIED`.
++5. Validate the report against `scanner/OUTPUT_SCHEMA.json`.
++6. Append outcome-log rows (spec section 11).
++7. Notify the user with the verdict, shortlist, and data-quality notes.
++
++## Stop conditions
++
++Disable the task and notify the user on: repeated authentication failure, missing same-day SIP data, schema-validation failure, or a spec SHA change.
++
++## Never
++
++Place orders, name option contracts, write to GitHub, print credentials, or apply a parameter change without a new scanner version.
+ 
+ ## Expansion later
+-Phase 2: obtain an authoritative, current and reproducible all-US-listed universe source; apply deterministic price/dollar-volume screening; process batches with endpoint limits; avoid survivorship and pagination biases. Phase 3: option-chain validation only after reliable and appropriately licensed options data. These phases are not active.
++
++Phase 2: an authoritative, reproducible all-US-listed universe with deterministic screening and survivorship-safe handling. Phase 3: option-chain validation only with reliable, licensed options data and its own acceptance test. Neither is active.
+diff --git a/scanner/MUSE_SETUP.md b/scanner/MUSE_SETUP.md
+index 95ebb37..6982772 100644
+--- a/scanner/MUSE_SETUP.md
++++ b/scanner/MUSE_SETUP.md
+@@ -2,24 +2,32 @@
+ 
+ ## Connection
+ 
+-In Meta Muse, inspect Settings > Connectors for GitHub (labels may vary). Authorize only the intended repository when possible. If the integration is unavailable, ask Muse what supported repository-reading alternatives exist. Never paste personal-access tokens, passwords, or secrets into a chat.
++In Meta Muse, inspect Settings > Connectors for GitHub (labels may vary). Authorize only this repository, read-only, when possible. Never paste personal-access tokens, passwords, or secrets into a chat.
+ 
+ ## First read-only test
+ 
+-Read `scanner/README.md`, `START_HERE.md` and `CURRENT_STATE.md` in `moefouly07/Option-Playbook`. Tell me which files you actually opened. Do not change any content or settings.
++```text
++Read scanner/README.md, scanner/SCANNER_V1_1_SPEC.md, START_HERE.md and CURRENT_STATE.md in moefouly07/Option-Playbook.
++Tell me which files you actually opened and the commit SHA.
++Do not change any content or settings.
++```
+ 
+-## One-time scan
++## Acceptance before automation
+ 
+-Perform a read-only US equity/ETF market opportunity scan with verified quotes and source timestamps. Report up to three candidates, or NO TRADE. For each: source and freshness, catalyst, price structure, bull/bear cases, trigger and invalidation, and known data gaps. Do not infer live prices from stale quotes. Do not trade or edit GitHub.
++Run the staged tests in `scanner/MUSE_ACCEPTANCE_TESTS.md` (T0-T6). The scope is the fixed 21-symbol pilot watchlist in the spec, not the whole market.
+ 
+-## Proposed recurring schedule (not installed)
++## Schedule (not installed until T7)
+ 
+-Weekdays at 09:00 America/New_York, excluding US market holidays. Ask Muse to create and confirm this task in its own scheduled-task UI, only after the one-time trial is accepted. Each run should produce a brief report even when there is NO TRADE.
++```text
++10:30 America/New_York, on US equity exchange trading days only
++```
++
++Not plain weekdays: exchange holidays are skipped and early-close days are handled by the calendar. A pre-market time such as 09:00 ET is not valid for V1.1 because the run needs same-day completed RTH bars. Create the task only after T0-T6 pass and the human sign-off is logged.
+ 
+ ## Validate
+ 
+-Check actual connected-repository access; verify a one-time run; confirm scheduled-task entry, timezone, notification setting, and logs. Do not claim automation is active from documentation alone.
++Check repository access, a one-time run, the scheduled-task entry, timezone, notification setting, and logs. Documentation alone never proves automation is active.
+ 
+ ## Security
+ 
+-Read-only research permission is preferred. Keep brokerage trading disabled. Do not publish private repository data or credentials.
++Read-only research permission only. Keep brokerage trading disabled. Treat this repository as publicly readable (`SECURITY.md`).
+diff --git a/scanner/OUTPUT_SCHEMA.json b/scanner/OUTPUT_SCHEMA.json
+new file mode 100644
+index 0000000..1285628
+--- /dev/null
++++ b/scanner/OUTPUT_SCHEMA.json
+@@ -0,0 +1,131 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "scanner/OUTPUT_SCHEMA.json",
++  "title": "SCANNER-V1.1 run report",
++  "type": "object",
++  "required": [
++    "spec_version", "spec_commit_sha", "implementation_ref", "run_type",
++    "scan_started_at_et", "market_session", "calendar_check",
++    "latest_completed_daily_bar_date", "data_sources", "universe",
++    "regime", "results", "selection", "options_status", "data_quality", "audit_notes"
++  ],
++  "properties": {
++    "spec_version": {"const": "SCANNER-V1.1"},
++    "spec_commit_sha": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
++    "implementation_ref": {"type": "string", "description": "hash or version of the code that produced this run"},
++    "run_type": {"enum": ["LIVE", "IN_SAMPLE_REPLAY", "FIXTURE_TEST", "EXPLORATORY_NOT_V1.1"]},
++    "scan_started_at_et": {"type": "string", "format": "date-time"},
++    "market_session": {"enum": ["PREMARKET", "REGULAR", "AFTER_HOURS", "CLOSED", "EARLY_CLOSE_DAY"]},
++    "calendar_check": {
++      "type": "object",
++      "required": ["source", "is_trading_day", "notes"],
++      "properties": {
++        "source": {"type": "string"},
++        "is_trading_day": {"type": "boolean"},
++        "notes": {"type": "string"}
++      }
++    },
++    "latest_completed_daily_bar_date": {"type": "string", "format": "date"},
++    "latest_completed_sip_5m_bar_et": {"type": ["string", "null"]},
++    "data_sources": {
++      "type": "object",
++      "required": ["daily_bars", "intraday_bars", "quotes"],
++      "properties": {
++        "daily_bars": {"type": "string", "description": "e.g. alpaca sip 1Day adjustment=..."},
++        "intraday_bars": {"type": "string"},
++        "quotes": {"type": "string", "description": "e.g. iex single-venue realtime / delayed_sip"}
++      }
++    },
++    "universe": {
++      "type": "object",
++      "required": ["universe_source", "universe_count", "eligible_count", "processed_count",
++                   "rejected_count", "insufficient_count", "benchmark"],
++      "properties": {
++        "universe_source": {"const": "fixed pilot watchlist (scanner/SCANNER_V1_1_SPEC.md)"},
++        "universe_count": {"const": 21},
++        "eligible_count": {"const": 20},
++        "processed_count": {"type": "integer"},
++        "rejected_count": {"type": "integer"},
++        "insufficient_count": {"type": "integer"},
++        "benchmark": {"const": "SPY"}
++      }
++    },
++    "regime": {
++      "type": "object",
++      "required": ["label", "status", "watchlist_breadth_above_sma50", "sector_etfs_above_sma20", "sector_etfs_counted"],
++      "properties": {
++        "label": {"enum": ["RISK_ON", "RISK_OFF", "MIXED"]},
++        "status": {"const": "RECORDED_ONLY"}
++      }
++    },
++    "results": {
++      "type": "array",
++      "minItems": 21,
++      "items": {
++        "type": "object",
++        "required": ["symbol", "label", "setup", "triggered", "failed", "flags", "reason", "metrics"],
++        "properties": {
++          "symbol": {"type": "string"},
++          "label": {"enum": ["CONFIRMED_SETUP", "RESEARCH_PASS", "WATCH", "REJECT", "INSUFFICIENT_DATA", "BENCHMARK"]},
++          "setup": {"enum": ["BREAKOUT_20D", "PULLBACK_TO_SMA20", null]},
++          "triggered": {"type": "array", "items": {"type": "string"}},
++          "failed": {"type": "array", "items": {"type": "string"}},
++          "flags": {"type": "array", "items": {"type": "string"}},
++          "reason": {"type": "string"},
++          "pivot": {"type": ["number", "null"]},
++          "invalidation": {"type": ["number", "null"]},
++          "metrics": {"type": "object"},
++          "factor_tag": {"type": "string"},
++          "earnings": {
++            "type": "object",
++            "properties": {
++              "next_date": {"type": ["string", "null"]},
++              "source": {"type": ["string", "null"]},
++              "status": {"enum": ["VERIFIED", "EARNINGS_DATE_UNVERIFIED"]},
++              "event_risk": {"type": "boolean"}
++            }
++          },
++          "intraday_status": {"enum": ["ABOVE_PIVOT", "BETWEEN_PIVOT_AND_INVALIDATION", "BELOW_INVALIDATION", "NOT_AVAILABLE", null]},
++          "catalysts": {
++            "type": "array",
++            "items": {
++              "type": "object",
++              "required": ["headline_paraphrase", "source_name", "source_tier", "url", "published", "verified"],
++              "properties": {
++                "headline_paraphrase": {"type": "string"},
++                "source_name": {"type": "string"},
++                "source_tier": {"enum": ["PRIMARY", "PRESS", "AGGREGATOR"]},
++                "url": {"type": "string"},
++                "published": {"type": "string", "description": "exact ET timestamp, or YYYY-MM-DD with DATE_ONLY flag"},
++                "date_only": {"type": "boolean"},
++                "verified": {"type": "boolean"},
++                "unverified_claims": {"type": "array", "items": {"type": "string"}}
++              }
++            }
++          }
++        }
++      }
++    },
++    "selection": {
++      "type": "object",
++      "required": ["verdict", "shortlist", "skipped_for_correlation", "correlation_log"],
++      "properties": {
++        "verdict": {"enum": ["CANDIDATES", "NO_CANDIDATES"]},
++        "shortlist": {"type": "array", "maxItems": 3, "items": {"type": "string", "not": {"const": "SPY"}}},
++        "skipped_for_correlation": {"type": "array"},
++        "correlation_log": {
++          "type": "array",
++          "items": {
++            "type": "object",
++            "required": ["pair", "r", "n", "first", "last", "method"],
++            "properties": {"method": {"const": "simple_returns_inner_join"}}
++          }
++        }
++      }
++    },
++    "options_status": {"const": "OPTIONS_NOT_VERIFIED"},
++    "outcome_log_rows_written": {"type": "integer"},
++    "data_quality": {"type": "array", "items": {"type": "string"}},
++    "audit_notes": {"type": "array", "items": {"type": "string"}}
++  }
++}
+diff --git a/scanner/README.md b/scanner/README.md
+index ebfae29..65b7d18 100644
+--- a/scanner/README.md
++++ b/scanner/README.md
+@@ -1,31 +1,51 @@
+-# Muse Market Scanner — Pilot
++# Muse Market Scanner
+ 
+-Status: DESIGN / NOT DEPLOYED
++```text
++Current version: SCANNER-V1.1
++Status:          PRE-REGISTERED / NOT VALIDATED / NOT SCHEDULED
++Scope:           fixed 21-symbol pilot watchlist, research only
++Execution:       none. No orders, ever.
++```
+ 
+-This directory defines an independent research and discovery workflow for Muse. It does not modify, replace, or validate frozen CIM-V1.0 rules.
++This directory defines an independent discovery workflow for Muse. It does not modify, replace, or validate frozen CIM-V1.0.
+ 
+-## Objective
++## Files
+ 
+-Find up to three liquid US equity/ETF opportunities for further investigation. A scan can return NO TRADE. Research does not authorize orders.
++```text
++SCANNER_V1_1_SPEC.md       canonical rules (read this first)
++reference/scanner_rules.py executable definition of the rules (stdlib only)
++reference/make_fixtures.py how the synthetic golden fixtures were built
++tests/                     unit tests + golden fixtures (synthetic, year 2099)
++OUTPUT_SCHEMA.json         required shape of every run report
++MUSE_ACCEPTANCE_TESTS.md   T0-T7 gate before any scheduling
++ACCEPTANCE_LOG.md          result of every acceptance attempt
++MUSE_SETUP.md              connecting Muse (beginner)
++MUSE_RUNBOOK.md            operating procedure
++SCANNER_RULES.md           one-page plain-language summary
++SCANNER_V1_SPEC.md         SUPERSEDED V1.0 spec, kept for history
++```
+ 
+-## Getting started
++## Labels
+ 
+-1. Connect Muse to GitHub using only the repository permissions required.
+-2. Ask Muse to read this file and MUSE_SETUP.md.
+-3. Run a one-time read-only demonstration scan and validate timestamps, sources, and candidate logic.
+-4. Only after checking results, create a daily recurring research task and confirm its schedule in Muse.
+-5. Never enable brokerage order placement or repository writes as part of scanner research.
++```text
++CONFIRMED_SETUP | RESEARCH_PASS | WATCH | REJECT | INSUFFICIENT_DATA | BENCHMARK
++```
+ 
+-## Research flow
++`TRADE_READY` is not a scanner label. No scanner output authorizes a trade.
+ 
+-deterministic market filter -> catalysts and market regime -> technical structure -> bear-case challenge -> options quality if data available -> shortlist.
++## Run the tests
+ 
+-## Source integrity
++```bash
++python3 -m unittest discover -s scanner/tests -v
++```
+ 
+-For each candidate log ticker, retrieval time ET, session, feed/vendor, delayed/live/unknown quote status, evidence links, technical trigger and invalidation, option liquidity if supported, and missing data.
++## Gates
+ 
+-Do not manufacture IV, Greeks, volume, spreads, probabilities, or historical performance. Do not claim a scanner edge before prospective evaluation.
++1. The reference tests pass.
++2. Muse passes T0-T6 in `MUSE_ACCEPTANCE_TESTS.md`.
++3. A human sign-off is recorded in `DECISION_LOG.md`.
++4. Only then is a recurring task created (T7).
+ 
+-## Separation
++## Integrity
+ 
+-The existing CIM-V1.0 strategy remains frozen. This directory is experimental discovery only.
++Every rule in V1.1 was written after seeing V1.0 pilot output (`DECISION_LOG.md` D-009). The 2026-10-09 data is in-sample. No scanner edge is claimed. Options are `OPTIONS_NOT_VERIFIED` until a licensed option-chain feed passes its own acceptance test.
+diff --git a/scanner/SCANNER_RULES.md b/scanner/SCANNER_RULES.md
+index 471b2ef..176e108 100644
+--- a/scanner/SCANNER_RULES.md
++++ b/scanner/SCANNER_RULES.md
+@@ -1,17 +1,23 @@
+-# Scanner Pilot Rules
++# Scanner Rules — Plain-Language Summary
+ 
+-Status: research draft, not a proven trading strategy.
++This page summarizes `SCANNER_V1_1_SPEC.md`. If anything here disagrees with the spec or `reference/scanner_rules.py`, the spec and the reference implementation win.
+ 
+-Universe: listed US stocks and liquid ETFs. Equity screen based on price, dollar volume, and clean data quality, with numeric cutoffs to be selected and tested using known vendor capabilities. Never silently reject candidates using invented data.
++Status: research draft. Not a proven trading strategy. No execution.
+ 
+-Stages:
+-1. Determine market session, holiday calendar, broad ETF and sector environment.
+-2. Identify unusual *verified* volume, relative-strength movement, breakouts/pullbacks, relevant catalysts.
+-3. Examine daily and 5m completed bars where available; confirm technical structure and one primary decision level.
+-4. Independently challenge the bull thesis with the strongest bear interpretation.
+-5. If listed options matter, verify specific expiry, strike, bid, ask, volume, open interest, IV and Greeks when available. A missing live options feed means OPTIONS NOT VERIFIED.
+-6. Label each candidate PASS / WATCH / REJECT / INSUFFICIENT DATA. Return at most three PASS candidates. NO TRADE is permitted.
++Universe: 21 fixed liquid symbols. SPY is the benchmark and is never a candidate.
+ 
+-Required fields: ticker; scan time ET; regular/premarket/after-hours state; data source/feed; quote freshness; setup; catalyst with evidence; trigger; invalidation; risk and missing data.
++Liquidity: close at least 10 dollars and 20-day average dollar volume at least 50 million, else REJECT. Missing data is INSUFFICIENT_DATA, never a negative signal.
+ 
+-No arbitrary probability/score, no backtested edge claim, no trading/execution, no edits to frozen strategy.
++Setups on the latest completed daily bar:
++
++- Breakout: close above the prior 20-day high and above SMA50. Confirmed when the close is in the upper half of the day's range on at least 1.5x volume.
++- Pullback: uptrend (close and SMA20 above SMA50), a low that reached the SMA20 zone (plus or minus 0.5 ATR14) in the last three sessions, and positive 20-day relative strength versus SPY. Confirmed by an up close, upper-half range position, today's low inside the zone, close back at or above SMA20, and at least 0.8x volume.
++- Extension: more than 2 ATR above SMA20 caps the label at RESEARCH_PASS; more than 3 ATR blocks it to WATCH.
++
++Selection: at most three, ranked by a fixed convention, skipping any name with absolute 60-day return correlation of 0.70 or more with a name already selected. Empty list means NO_CANDIDATES.
++
++Recorded only, never decisive in V1.1: regime, catalysts, RSI, earnings proximity, intraday status.
++
++Labels: CONFIRMED_SETUP, RESEARCH_PASS, WATCH, REJECT, INSUFFICIENT_DATA, BENCHMARK.
++
++No arbitrary probabilities or scores, no edge claims, no trading, no edits to the frozen strategy.
+diff --git a/scanner/SCANNER_V1_1_SPEC.md b/scanner/SCANNER_V1_1_SPEC.md
+new file mode 100644
+index 0000000..06e8473
+--- /dev/null
++++ b/scanner/SCANNER_V1_1_SPEC.md
+@@ -0,0 +1,171 @@
++# Muse Scanner — SCANNER-V1.1 Specification
++
++```text
++Version:      SCANNER-V1.1
++Status:       PRE-REGISTERED / NOT VALIDATED / RESEARCH ONLY
++Supersedes:   SCANNER-V1.0 (scanner/SCANNER_V1_SPEC.md)
++Registered:   2026-10-10, before the first live V1.1 run
++Decisions:    DECISION_LOG.md D-009 to D-017
++Executable:   scanner/reference/scanner_rules.py
++Gate:         scanner/MUSE_ACCEPTANCE_TESTS.md
++Report shape: scanner/OUTPUT_SCHEMA.json
++```
++
++This scanner is an independent discovery layer. It never modifies, replaces, or validates frozen CIM-V1.0.
++
++## 0. Honesty statement (read first)
++
++Every V1.1 rule was written **after** reviewing the V1.0 pilot output on 2026-10-09 completed bars. V1.1 is therefore a new hypothesis, not an improved result. The 2026-10-09 data is in-sample for V1.1 and is not evidence for it. The first out-of-sample observation is the first live run made after this file is committed.
++
++If this document and the reference implementation disagree, stop and log the ambiguity. Do not choose the interpretation that produces more candidates.
++
++## 1. Freeze rule
++
++Every value in `PARAMS` (section 5) is fixed at commit time. Changing any value, label, gate, or ranking key creates SCANNER-V1.2 and requires a `DECISION_LOG.md` entry and a new validation plan. An exploratory variant may be run only when labeled `EXPLORATORY_NOT_V1.1` and must never replace the V1.1 report.
++
++## 2. Universe
++
++```text
++universe_source: fixed pilot watchlist (this file)
++universe_count:  21
++benchmark:       SPY            (never a candidate)
++eligible_count:  20
++broad ETFs:      SPY QQQ IWM
++sector ETFs:     SMH XLK XLF XLE XLI
++equities:        AAPL MSFT NVDA AMZN GOOGL META TSLA AMD MU AVGO MRVL PLTR QCOM
++```
++
++This is not a full-market scan and must never be described as one.
++
++## 3. Data and time
++
++- Timezone `America/New_York`. Use the actual exchange calendar, including holidays and early closes.
++- Daily classification uses **completed** consolidated SIP daily bars only. During a live session, today's daily bar is incomplete and is excluded; the latest completed daily bar is the previous session.
++- Minimum history: 70 completed daily bars per symbol and for SPY. Otherwise `INSUFFICIENT_DATA`.
++- A symbol whose latest completed daily date differs from SPY's is `INSUFFICIENT_DATA`.
++- Intraday: completed RTH SIP 5-minute bars, requested with `end = now − 20 minutes`. Extended-hours bars removed. Intraday data is **recorded only** in V1.1 (section 9).
++- IEX quotes are single-venue. Never mix IEX and SIP volume. Never treat delayed data as an execution signal.
++- Every report records the spec commit SHA it ran against.
++
++## 4. Labels (single enum, used everywhere)
++
++```text
++CONFIRMED_SETUP     setup + every confirmation condition on the latest completed daily bar
++RESEARCH_PASS       setup structure present, confirmation incomplete or capped
++WATCH               eligible symbol without a qualifying setup, or a blocked setup
++REJECT              fails the liquidity screen
++INSUFFICIENT_DATA   missing or misaligned data; never a negative signal
++BENCHMARK           SPY only; regime reference
++```
++
++`TRADE_READY` is **not** a scanner label. No V1.1 output authorizes entry. A future trade-readiness stage would require live executable quotes, verified option-chain data, and human approval, and would be a separate specification.
++
++## 5. Parameters (PRE-REGISTERED)
++
++```text
++min_daily_bars          70
++atr_len / rsi_len       14 / 14        Wilder
++sma_fast / sma_slow     20 / 50
++rs_lookback             20 sessions
++rvol_lookback           20 sessions
++adv_lookback            20 sessions
++breakout_lookback       20 sessions
++pullback_touch_lookback 3 sessions
++zone_atr_mult           0.5
++breakout_min_rvol       1.5
++pullback_min_rvol       0.8
++min_range_pos           0.5
++ext_flag_atr            2.0
++ext_block_atr           3.0
++rsi_overbought          75   (recorded only)
++min_price               10.00
++min_adv_usd             50,000,000
++corr_window             60 joined returns
++corr_min_overlap        55
++corr_flag               0.70
++max_candidates          3
++```
++
++## 6. Definitions
++
++All values on completed daily bars; `t` = latest completed bar.
++
++```text
++SMA_n        mean of the last n closes
++TR_i         max(H_i − L_i, |H_i − C_{i−1}|, |L_i − C_{i−1}|)
++ATR14        seed = mean of first 14 TR; then ATR_i = (ATR_{i−1} × 13 + TR_i) / 14
++RSI14        Wilder; seed = mean of first 14 gains / losses
++range_pos    (C_t − L_t) / (H_t − L_t); undefined if H_t = L_t (fails the condition)
++RVOL20       V_t / mean(V_{t−20} … V_{t−1})
++ADV20_usd    mean(C × V) over the last 20 bars
++RS20_pp      [(C_t / C_{t−20}) − 1 − ((SPY_t / SPY_{t−20}) − 1)] × 100, on date-aligned closes
++ext_atr      (C_t − SMA20) / ATR14
++zone         [SMA20 − 0.5 × ATR14 , SMA20 + 0.5 × ATR14]
++prior_20d_high  max(H_{t−20} … H_{t−1})
++```
++
++`RS20_pp = 0.0` is a valid value. Implementations must test for missing values with an explicit `None` check, never truthiness (V1.0 bug).
++
++## 7. Classification order
++
++1. `SPY` → `BENCHMARK`.
++2. Fewer than 70 bars, misaligned latest date, or any required metric missing → `INSUFFICIENT_DATA`.
++3. `C_t < 10` or `ADV20_usd < 50M` → `REJECT`.
++4. **Breakout** (checked first): `C_t > prior_20d_high` and `C_t > SMA50`.
++   Confirmation: `range_pos ≥ 0.5` and `RVOL20 ≥ 1.5`.
++   Pivot = `H_t`. Invalidation = daily close below `prior_20d_high`.
++5. **Pullback** (only if not a breakout):
++   Structure: `C_t > SMA50`, `SMA20 > SMA50`, `min(L_{t−2}, L_{t−1}, L_t) ≤ zone_hi`, `C_t ≥ zone_lo`.
++   If structure fails → `WATCH` ("no qualifying setup").
++   Gate: `RS20_pp > 0`. If it fails → `WATCH` ("relative strength not positive").
++   Confirmation: `C_t > C_{t−1}`, `range_pos ≥ 0.5`, `L_t ≤ zone_hi`, `C_t ≥ SMA20`, `RVOL20 ≥ 0.8`.
++   Pivot = `SMA20`. Invalidation = daily close below `zone_lo`.
++6. **Extension penalty** (any setup): `ext_atr > 3.0` → `WATCH` with flag `OVEREXTENDED`. `2.0 < ext_atr ≤ 3.0` → flag `EXTENDED`; tier capped at `RESEARCH_PASS`.
++7. Setup with all confirmations and no cap → `CONFIRMED_SETUP`; otherwise `RESEARCH_PASS`.
++
++Every result lists `triggered` and `failed` condition names exactly as in the reference implementation.
++
++## 8. Ranking, selection, correlation
++
++Ranking is a reproducibility convention, not a quality score or edge claim:
++
++```text
++key = (tier: CONFIRMED_SETUP=0, RESEARCH_PASS=1,
++       setup: BREAKOUT_20D=0, PULLBACK_TO_SMA20=1,
++       −RS20_pp, −RVOL20, symbol ascending)
++```
++
++Walk the ranked list. Before adding a symbol, compute its correlation with every already-selected symbol:
++
++```text
++1. simple daily returns per series, on that series' own consecutive completed bars
++2. inner join on return date
++3. last 60 joined dates
++4. require ≥ 55 joined returns, else r = None (flag CORRELATION_UNAVAILABLE_WITH_X)
++5. |r| ≥ 0.70 → skip with flag CORRELATED_WITH_X and continue down the list
++```
++
++Prices are never correlated directly. Every reported r includes `method`, `n`, `first`, `last`. Stop at 3 selections. Empty shortlist → verdict `NO_CANDIDATES`.
++
++Shared-factor tags (static, recorded only): `semis` (SMH NVDA AMD MU AVGO MRVL QCOM), `megacap_tech` (AAPL MSFT AMZN GOOGL META), `software_ai` (PLTR), `ev_auto` (TSLA), `broad` (QQQ IWM), `sector` (XLK XLF XLE XLI). Note in every report that all long candidates share broad-market beta and that equities in the universe are SPY constituents.
++
++## 9. Recorded-only fields (cannot change any label in V1.1)
++
++- **Regime**: `RISK_ON` if SPY and QQQ close above SMA50 and watchlist breadth above SMA50 ≥ 60%; `RISK_OFF` if both below and breadth < 40%; else `MIXED`. Breadth is labeled `watchlist_breadth`, never market breadth. Sector count uses only the five sector ETFs.
++- **RSI ≥ 75** → flag `RSI_OVERBOUGHT_RECORDED_ONLY`.
++- **Catalysts** for shortlisted names: each with paraphrased headline, source name, source tier (`PRIMARY` company/SEC/exchange, `PRESS`, `AGGREGATOR`), URL, exact publication timestamp ET (or `DATE_ONLY` flag), `verified` true/false. Aggregator figures are `UNVERIFIED` until matched to a filing. No date ranges such as "10-08/09".
++- **Earnings**: next date from a primary source, else `EARNINGS_DATE_UNVERIFIED`. Within 10 sessions of the scan → `EVENT_RISK`.
++- **Intraday status** for shortlisted names from the latest completed delayed SIP 5-minute bar: `ABOVE_PIVOT`, `BETWEEN_PIVOT_AND_INVALIDATION`, `BELOW_INVALIDATION`, or `NOT_AVAILABLE`.
++- **Options**: `OPTIONS_NOT_VERIFIED` for every symbol until a licensed option-chain feed passes its own acceptance test.
++
++## 10. Report
++
++The run report must validate against `scanner/OUTPUT_SCHEMA.json`, include all 21 symbols, and state the verdict. Raw vendor bars are not committed (see `SECURITY.md`).
++
++## 11. Outcome logging (starts with the first live run)
++
++For every symbol in every run, log label, setup, pivot, invalidation, and close at the scan's latest completed daily bar. Later fill forward closes at +1, +5, and +10 sessions, and whether invalidation was hit first. These horizons are pre-registered now so evaluation is not chosen after the fact. Logging is research bookkeeping, not a performance claim.
++
++## 12. Acceptance
++
++V1.1 may be scheduled only after every test in `scanner/MUSE_ACCEPTANCE_TESTS.md` passes and a human signs off in `DECISION_LOG.md`.
+diff --git a/scanner/SCANNER_V1_SPEC.md b/scanner/SCANNER_V1_SPEC.md
+index 683cc8b..121b791 100644
+--- a/scanner/SCANNER_V1_SPEC.md
++++ b/scanner/SCANNER_V1_SPEC.md
+@@ -1,3 +1,7 @@
++> **SUPERSEDED on 2026-10-10 by `SCANNER_V1_1_SPEC.md` (SCANNER-V1.1).**
++> Kept unchanged below for history and audit. Do not run this version.
++> Its labels (PASS/WATCH/REJECT/INSUFFICIENT DATA) are replaced by the V1.1 enum.
++
+ # Muse Scanner V1 — Pilot Specification
+ 
+ Status: DESIGN / NOT VALIDATED / NO AUTO-EXECUTION
+diff --git a/scanner/reference/make_fixtures.py b/scanner/reference/make_fixtures.py
+new file mode 100644
+index 0000000..636a502
+--- /dev/null
++++ b/scanner/reference/make_fixtures.py
+@@ -0,0 +1,217 @@
++"""
++Generate SYNTHETIC golden fixtures for SCANNER-V1.1.
++
++These are not market data. Dates are in the year 2099 on purpose so no one
++mistakes them for real prices. Each symbol is engineered to hit one specific
++rule path. The committed CSV files are the source of truth; this script only
++documents how they were produced.
++
++Usage (from repository root):
++    python3 scanner/reference/make_fixtures.py
++"""
++from __future__ import annotations
++
++import csv
++import json
++import random
++import sys
++from datetime import date, timedelta
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++sys.path.insert(0, str(HERE))
++import scanner_rules as sr  # noqa: E402
++
++OUT = HERE.parent / "tests" / "fixtures"
++N = 90
++
++# Designed intent. The test suite checks the reference implementation
++# against THIS table, not just against its own previous output.
++INTENDED = {
++    "SPY": sr.BENCHMARK_ONLY,
++    "QQQ": sr.WATCH,
++    "BRKC": sr.CONFIRMED_SETUP,     # clean 20-day breakout, moderate extension
++    "BRKE": sr.RESEARCH_PASS,       # breakout capped by EXTENDED (2-3 ATR)
++    "BRKX": sr.WATCH,               # breakout blocked by OVEREXTENDED (>3 ATR)
++    "PULC": sr.CONFIRMED_SETUP,     # pullback to SMA20 zone with reversal
++    "TWIN": sr.CONFIRMED_SETUP,     # near-copy of PULC -> dropped for correlation
++    "PULR": sr.RESEARCH_PASS,       # pullback structure, no reversal
++    "PULN": sr.WATCH,               # pullback structure, RS not positive
++    "DOWN": sr.WATCH,               # downtrend, no setup
++    "CHEAP": sr.REJECT,             # price below 10
++    "THIN": sr.REJECT,              # dollar volume below 50M
++    "SHORT": sr.INSUFFICIENT_DATA,  # fewer than 70 completed bars
++    "STALE": sr.INSUFFICIENT_DATA,  # last bar date differs from benchmark
++}
++INTENDED_SHORTLIST = ["BRKC", "PULC", "BRKE"]
++
++
++def weekdays(n: int, end: date = date(2099, 6, 30)) -> list[str]:
++    out, d = [], end
++    while len(out) < n:
++        if d.weekday() < 5:
++            out.append(d.isoformat())
++        d -= timedelta(days=1)
++    return out[::-1]
++
++
++DATES = weekdays(N)
++
++
++def path(start: float, drifts: list[float], vol: float, seed: int) -> list[float]:
++    rng = random.Random(seed)
++    closes, c = [], start
++    for d in drifts:
++        c *= 1.0 + d + rng.gauss(0.0, vol)
++        closes.append(c)
++    return closes
++
++
++def bars_from_closes(closes, seed, base_vol=5_000_000, wick=0.004):
++    rng = random.Random(seed + 1000)
++    out, prev = [], closes[0] * 0.998
++    for i, c in enumerate(closes):
++        o = prev * (1.0 + rng.gauss(0.0, 0.002))
++        hi = max(o, c) * (1.0 + abs(rng.gauss(0.0, wick)))
++        lo = min(o, c) * (1.0 - abs(rng.gauss(0.0, wick)))
++        v = base_vol * (1.0 + 0.15 * rng.uniform(-1, 1))
++        out.append([DATES[i], o, hi, lo, c, v])
++        prev = c
++    return out
++
++
++def set_last(rows, o=None, h=None, l=None, c=None, v_mult=None, idx=-1):
++    r = rows[idx]
++    if o is not None: r[1] = o
++    if c is not None: r[4] = c
++    if h is not None: r[2] = h
++    if l is not None: r[3] = l
++    r[2] = max(r[2], r[1], r[4])
++    r[3] = min(r[3], r[1], r[4])
++    if v_mult is not None:
++        base = sum(x[5] for x in rows[idx - 20:idx]) / 20
++        r[5] = base * v_mult
++
++
++def build() -> dict[str, list[list]]:
++    U: dict[str, list[list]] = {}
++
++    U["SPY"] = bars_from_closes(path(500, [0.0005] * N, 0.006, 1), 1, 80_000_000)
++    U["QQQ"] = bars_from_closes(path(420, [0.0004] * N, 0.008, 2), 2, 40_000_000)
++
++    # BRKC: trend, 20-bar flat base, close just above base high on 2x volume
++    dr = [0.003] * 60 + [0.0] * 29 + [0.0]
++    rows = bars_from_closes(path(100, dr, 0.006, 3), 3)
++    ph = max(r[2] for r in rows[-21:-1])
++    set_last(rows, o=ph * 0.995, c=ph * 1.004, h=ph * 1.006, l=ph * 0.993, v_mult=2.2)
++    U["BRKC"] = rows
++
++    # BRKE: steadier advance -> extension 2-3 ATR at breakout
++    dr = [0.002] * 60 + [0.004] * 30
++    rows = bars_from_closes(path(80, dr, 0.006, 4), 4)
++    ph = max(r[2] for r in rows[-21:-1])
++    set_last(rows, o=ph * 0.997, c=ph * 1.010, h=ph * 1.011, l=ph * 0.995, v_mult=1.9)
++    U["BRKE"] = rows
++
++    # BRKX: very steep, low-noise run -> extension > 3 ATR
++    dr = [0.002] * 60 + [0.012] * 30
++    rows = bars_from_closes(path(60, dr, 0.003, 5), 5, wick=0.002)
++    ph = max(r[2] for r in rows[-21:-1])
++    set_last(rows, o=ph * 0.999, c=ph * 1.015, h=ph * 1.016, l=ph * 0.998, v_mult=2.0)
++    U["BRKX"] = rows
++
++    # PULC: uptrend, 6-bar dip into SMA20 zone, reversal bar
++    dr = [0.004] * 80 + [-0.006] * 9 + [0.0]
++    rows = bars_from_closes(path(150, dr, 0.005, 6), 6)
++    closes = [r[4] for r in rows]
++    s20 = sum(closes[-20:-1] + [closes[-2]]) / 20
++    set_last(rows, o=s20 * 0.995, c=s20 * 1.012, h=s20 * 1.014, l=s20 * 0.993, v_mult=1.1)
++    U["PULC"] = rows
++
++    # TWIN: PULC scaled by a slowly decaying factor with tiny noise
++    rng = random.Random(77)
++    twin = []
++    for i, r in enumerate(U["PULC"]):
++        f = 0.6 * (1.0 - 0.0004 * i) * (1.0 + rng.gauss(0.0, 0.0015))
++        twin.append([r[0], r[1] * f, r[2] * f, r[3] * f, r[4] * f, r[5] * 1.3])
++    U["TWIN"] = twin
++
++    # PULR: same shape as PULC (different seed) but last bar closes weak
++    dr = [0.004] * 80 + [-0.006] * 9 + [0.0]
++    rows = bars_from_closes(path(120, dr, 0.005, 8), 8)
++    closes = [r[4] for r in rows]
++    s20 = sum(closes[-20:]) / 20
++    set_last(rows, o=s20 * 1.004, c=s20 * 0.997, h=s20 * 1.006, l=s20 * 0.993, v_mult=1.0)
++    U["PULR"] = rows
++
++    # PULN: strong earlier, flat-to-soft last ~25 bars -> RS20 <= 0
++    dr = [0.0] * 20 + [0.008] * 50 + [-0.003] * 19 + [0.0]
++    rows = bars_from_closes(path(90, dr, 0.004, 9), 9)
++    closes = [r[4] for r in rows]
++    s20 = sum(closes[-20:]) / 20
++    set_last(rows, o=s20 * 0.997, c=s20 * 1.006, h=s20 * 1.008, l=s20 * 0.995, v_mult=1.0)
++    U["PULN"] = rows
++
++    U["DOWN"] = bars_from_closes(path(200, [-0.003] * N, 0.008, 10), 10)
++    U["CHEAP"] = bars_from_closes(path(6, [0.002] * N, 0.01, 11), 11, 20_000_000)
++    U["THIN"] = bars_from_closes(path(50, [0.002] * N, 0.01, 12), 12, 300_000)
++    U["SHORT"] = bars_from_closes(path(70, [0.002] * N, 0.01, 13), 13)[-40:]
++    U["STALE"] = bars_from_closes(path(70, [0.002] * N, 0.01, 14), 14)[:-1]
++    return U
++
++
++def write_csv(sym: str, rows) -> None:
++    p = OUT / "bars" / f"{sym}.csv"
++    p.parent.mkdir(parents=True, exist_ok=True)
++    with p.open("w", newline="") as fh:
++        w = csv.writer(fh, lineterminator="\n")
++        w.writerow(["date", "open", "high", "low", "close", "volume"])
++        for r in rows:
++            w.writerow([r[0], f"{r[1]:.4f}", f"{r[2]:.4f}", f"{r[3]:.4f}",
++                        f"{r[4]:.4f}", f"{int(round(r[5]))}"])
++
++
++def load(sym: str) -> list[sr.Bar]:
++    with (OUT / "bars" / f"{sym}.csv").open() as fh:
++        return [sr.Bar(r["date"], float(r["open"]), float(r["high"]),
++                       float(r["low"]), float(r["close"]), float(r["volume"]))
++                for r in csv.DictReader(fh)]
++
++
++def evaluate(symbols):
++    bars = {s: load(s) for s in symbols}
++    bench = bars[sr.BENCHMARK]
++    results = [sr.classify(s, bars[s], bench) for s in symbols]
++    selection = sr.select(results, bars)
++    return bars, results, selection
++
++
++def main() -> None:
++    U = build()
++    for sym, rows in U.items():
++        write_csv(sym, rows)
++    symbols = sorted(U)
++    bars, results, selection = evaluate(symbols)
++
++    bad = [(r.symbol, r.label, INTENDED[r.symbol], r.reason)
++           for r in results if r.label != INTENDED[r.symbol]]
++    if bad or selection["shortlist"] != INTENDED_SHORTLIST:
++        for b in bad:
++            print("MISMATCH", b)
++        print("shortlist", selection["shortlist"])
++        raise SystemExit("fixtures do not match designed intent; adjust generator")
++
++    expected = {
++        "spec_version": sr.SPEC_VERSION,
++        "note": "SYNTHETIC fixtures. Not market data.",
++        "benchmark": sr.BENCHMARK,
++        "results": [r.as_dict() for r in results],
++        "selection": selection,
++        "regime": sr.regime(bars),
++    }
++    (OUT / "expected_output.json").write_text(json.dumps(expected, indent=2))
++    print("ok:", len(results), "symbols; shortlist", selection["shortlist"])
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scanner/reference/scanner_rules.py b/scanner/reference/scanner_rules.py
+new file mode 100644
+index 0000000..81a4799
+--- /dev/null
++++ b/scanner/reference/scanner_rules.py
+@@ -0,0 +1,438 @@
++"""
++SCANNER-V1.1 reference implementation.
++
++Purpose
++-------
++This file is the executable definition of the rules in
++scanner/SCANNER_V1_1_SPEC.md. Any production implementation (for example
++Muse's workspace code) must reproduce the labels and numbers this module
++produces on scanner/tests/fixtures/ before its live output is trusted.
++
++Constraints
++-----------
++- Python standard library only.
++- Pure functions. No network, no files, no broker or trading code.
++- Completed daily bars only. The caller must drop any in-progress bar.
++- Parameters are PRE-REGISTERED. Changing any value is a new scanner
++  version and requires a DECISION_LOG.md entry.
++"""
++from __future__ import annotations
++
++from dataclasses import dataclass, field
++from math import sqrt
++from typing import Dict, List, Optional, Sequence
++
++SPEC_VERSION = "SCANNER-V1.1"
++BENCHMARK = "SPY"
++BROAD_ETFS = ("SPY", "QQQ", "IWM")
++SECTOR_ETFS = ("SMH", "XLK", "XLF", "XLE", "XLI")
++
++PARAMS: Dict[str, float] = {
++    "min_daily_bars": 70,
++    "atr_len": 14,
++    "rsi_len": 14,
++    "sma_fast": 20,
++    "sma_slow": 50,
++    "rs_lookback": 20,
++    "rvol_lookback": 20,
++    "adv_lookback": 20,
++    "breakout_lookback": 20,
++    "pullback_touch_lookback": 3,
++    "zone_atr_mult": 0.5,
++    "breakout_min_rvol": 1.5,
++    "pullback_min_rvol": 0.8,
++    "min_range_pos": 0.5,
++    "ext_flag_atr": 2.0,
++    "ext_block_atr": 3.0,
++    "rsi_overbought": 75.0,
++    "min_price": 10.0,
++    "min_adv_usd": 50_000_000.0,
++    "corr_window": 60,
++    "corr_min_overlap": 55,
++    "corr_flag": 0.70,
++    "max_candidates": 3,
++}
++
++# Labels (single enum used everywhere)
++CONFIRMED_SETUP = "CONFIRMED_SETUP"
++RESEARCH_PASS = "RESEARCH_PASS"
++WATCH = "WATCH"
++REJECT = "REJECT"
++INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
++BENCHMARK_ONLY = "BENCHMARK"
++
++BREAKOUT = "BREAKOUT_20D"
++PULLBACK = "PULLBACK_TO_SMA20"
++
++TIER_ORDER = {CONFIRMED_SETUP: 0, RESEARCH_PASS: 1}
++SETUP_ORDER = {BREAKOUT: 0, PULLBACK: 1}
++
++
++@dataclass(frozen=True)
++class Bar:
++    date: str  # ISO YYYY-MM-DD, session date in America/New_York
++    open: float
++    high: float
++    low: float
++    close: float
++    volume: float
++
++
++# ---------------------------------------------------------------- indicators
++
++
++def sma(values: Sequence[float], n: int) -> Optional[float]:
++    if n <= 0 or len(values) < n:
++        return None
++    return sum(values[-n:]) / n
++
++
++def true_ranges(bars: Sequence[Bar]) -> List[float]:
++    """TR for bars[1:], each using the previous bar's close."""
++    out = []
++    for prev, cur in zip(bars[:-1], bars[1:]):
++        out.append(max(cur.high - cur.low,
++                       abs(cur.high - prev.close),
++                       abs(cur.low - prev.close)))
++    return out
++
++
++def wilder_atr(bars: Sequence[Bar], n: int = 14) -> Optional[float]:
++    """Wilder ATR: seed = simple mean of the first n TRs, then
++    ATR_t = (ATR_{t-1} * (n - 1) + TR_t) / n. Needs n + 1 bars."""
++    trs = true_ranges(bars)
++    if len(trs) < n:
++        return None
++    atr = sum(trs[:n]) / n
++    for tr in trs[n:]:
++        atr = (atr * (n - 1) + tr) / n
++    return atr
++
++
++def wilder_rsi(closes: Sequence[float], n: int = 14) -> Optional[float]:
++    """Wilder RSI. Seed averages = simple mean of first n gains/losses."""
++    if len(closes) < n + 1:
++        return None
++    changes = [b - a for a, b in zip(closes[:-1], closes[1:])]
++    gains = [max(c, 0.0) for c in changes]
++    losses = [max(-c, 0.0) for c in changes]
++    avg_g = sum(gains[:n]) / n
++    avg_l = sum(losses[:n]) / n
++    for g, l in zip(gains[n:], losses[n:]):
++        avg_g = (avg_g * (n - 1) + g) / n
++        avg_l = (avg_l * (n - 1) + l) / n
++    if avg_l == 0.0:
++        return 100.0 if avg_g > 0.0 else 50.0
++    rs = avg_g / avg_l
++    return 100.0 - 100.0 / (1.0 + rs)
++
++
++def range_position(bar: Bar) -> Optional[float]:
++    """(close - low) / (high - low). None when high == low."""
++    span = bar.high - bar.low
++    if span <= 0:
++        return None
++    return (bar.close - bar.low) / span
++
++
++def rvol(bars: Sequence[Bar], k: int = 20) -> Optional[float]:
++    """Latest completed daily volume / mean of the previous k volumes."""
++    if len(bars) < k + 1:
++        return None
++    base = sum(b.volume for b in bars[-1 - k:-1]) / k
++    if base <= 0:
++        return None
++    return bars[-1].volume / base
++
++
++def adv_usd(bars: Sequence[Bar], k: int = 20) -> Optional[float]:
++    if len(bars) < k:
++        return None
++    return sum(b.close * b.volume for b in bars[-k:]) / k
++
++
++def relative_strength(sym: Sequence[Bar], bench: Sequence[Bar],
++                      k: int = 20) -> Optional[float]:
++    """k-day return of sym minus k-day return of bench, in percentage
++    points, on date-aligned closes. None if the latest dates differ or
++    there are fewer than k + 1 aligned dates.
++
++    IMPORTANT: 0.0 is a valid value. Test with `is None`, never truthiness.
++    """
++    if not sym or not bench or sym[-1].date != bench[-1].date:
++        return None
++    bmap = {b.date: b.close for b in bench}
++    pairs = [(b.close, bmap[b.date]) for b in sym if b.date in bmap]
++    if len(pairs) < k + 1:
++        return None
++    s0, b0 = pairs[-1 - k]
++    s1, b1 = pairs[-1]
++    return ((s1 / s0 - 1.0) - (b1 / b0 - 1.0)) * 100.0
++
++
++def _returns_by_date(bars: Sequence[Bar]) -> Dict[str, float]:
++    """Simple returns on each series' OWN consecutive bars, keyed by the
++    later bar's date. Joining happens afterwards, on returns."""
++    return {cur.date: cur.close / prev.close - 1.0
++            for prev, cur in zip(bars[:-1], bars[1:])}
++
++
++def pearson(x: Sequence[float], y: Sequence[float]) -> Optional[float]:
++    n = len(x)
++    if n != len(y) or n < 3:
++        return None
++    mx, my = sum(x) / n, sum(y) / n
++    sxx = sum((a - mx) ** 2 for a in x)
++    syy = sum((b - my) ** 2 for b in y)
++    if sxx == 0 or syy == 0:
++        return None
++    sxy = sum((a - mx) * (b - my) for a, b in zip(x, y))
++    return sxy / sqrt(sxx * syy)
++
++
++def correlation(a: Sequence[Bar], b: Sequence[Bar], window: int = 60,
++                min_overlap: int = 55) -> Dict[str, object]:
++    """Pearson correlation of daily simple returns.
++
++    Method (must be reported with every value):
++      1. returns computed per series on its own consecutive completed bars;
++      2. inner join on return date;
++      3. keep the last `window` joined dates;
++      4. require at least `min_overlap` joined returns, else r = None.
++    Prices are never correlated directly.
++    """
++    ra, rb = _returns_by_date(a), _returns_by_date(b)
++    dates = sorted(set(ra) & set(rb))[-window:]
++    out: Dict[str, object] = {"r": None, "n": len(dates),
++                              "first": dates[0] if dates else None,
++                              "last": dates[-1] if dates else None,
++                              "method": "simple_returns_inner_join"}
++    if len(dates) < min_overlap:
++        return out
++    out["r"] = pearson([ra[d] for d in dates], [rb[d] for d in dates])
++    return out
++
++
++# ------------------------------------------------------------ classification
++
++
++@dataclass
++class Result:
++    symbol: str
++    label: str
++    setup: Optional[str] = None
++    triggered: List[str] = field(default_factory=list)
++    failed: List[str] = field(default_factory=list)
++    flags: List[str] = field(default_factory=list)
++    reason: str = ""
++    metrics: Dict[str, Optional[float]] = field(default_factory=dict)
++    pivot: Optional[float] = None
++    invalidation: Optional[float] = None
++
++    def as_dict(self) -> Dict[str, object]:
++        return {
++            "symbol": self.symbol, "label": self.label, "setup": self.setup,
++            "triggered": self.triggered, "failed": self.failed,
++            "flags": self.flags, "reason": self.reason,
++            "metrics": self.metrics, "pivot": self.pivot,
++            "invalidation": self.invalidation,
++        }
++
++
++def _check(res: Result, name: str, ok: bool) -> bool:
++    (res.triggered if ok else res.failed).append(name)
++    return ok
++
++
++def classify(symbol: str, bars: Sequence[Bar], bench: Sequence[Bar],
++             p: Dict[str, float] = PARAMS) -> Result:
++    n_min = int(p["min_daily_bars"])
++    if len(bars) < n_min:
++        return Result(symbol, INSUFFICIENT_DATA,
++                      reason=f"only {len(bars)} completed daily bars (< {n_min})")
++    if symbol != BENCHMARK:
++        if len(bench) < n_min:
++            return Result(symbol, INSUFFICIENT_DATA,
++                          reason="benchmark history insufficient")
++        if bars[-1].date != bench[-1].date:
++            return Result(symbol, INSUFFICIENT_DATA,
++                          reason="latest bar date differs from benchmark")
++
++    t, prev = bars[-1], bars[-2]
++    closes = [b.close for b in bars]
++    m: Dict[str, Optional[float]] = {}
++    m["close"] = t.close
++    m["sma20"] = sma(closes, int(p["sma_fast"]))
++    m["sma50"] = sma(closes, int(p["sma_slow"]))
++    m["atr14"] = wilder_atr(bars, int(p["atr_len"]))
++    m["atr14_pct"] = (m["atr14"] / t.close * 100.0) if m["atr14"] else None
++    m["rsi14"] = wilder_rsi(closes, int(p["rsi_len"]))
++    m["rvol20"] = rvol(bars, int(p["rvol_lookback"]))
++    m["adv20_usd"] = adv_usd(bars, int(p["adv_lookback"]))
++    m["range_pos"] = range_position(t)
++    m["rs20_pp"] = (0.0 if symbol == BENCHMARK
++                    else relative_strength(bars, bench, int(p["rs_lookback"])))
++    m["ext_atr"] = ((t.close - m["sma20"]) / m["atr14"]
++                    if m["sma20"] is not None and m["atr14"] else None)
++
++    res = Result(symbol, WATCH, metrics=m)
++
++    if symbol == BENCHMARK:
++        res.label = BENCHMARK_ONLY
++        res.reason = "benchmark and regime reference; never a candidate"
++        return res
++
++    required = ("sma20", "sma50", "atr14", "rsi14", "rvol20", "adv20_usd",
++                "rs20_pp", "ext_atr")
++    missing = [k for k in required if m[k] is None]
++    if missing:
++        res.label = INSUFFICIENT_DATA
++        res.reason = "missing: " + ", ".join(missing)
++        return res
++
++    # Liquidity gate
++    liquid = _check(res, "close>=min_price", t.close >= p["min_price"])
++    liquid &= _check(res, "adv20_usd>=min_adv", m["adv20_usd"] >= p["min_adv_usd"])
++    if not liquid:
++        res.label = REJECT
++        res.reason = "fails liquidity screen"
++        return res
++
++    if m["rsi14"] >= p["rsi_overbought"]:
++        res.flags.append("RSI_OVERBOUGHT_RECORDED_ONLY")
++
++    sma20, sma50, atr = m["sma20"], m["sma50"], m["atr14"]
++    zone_lo = sma20 - p["zone_atr_mult"] * atr
++    zone_hi = sma20 + p["zone_atr_mult"] * atr
++    m["zone_lo"], m["zone_hi"] = zone_lo, zone_hi
++
++    lb = int(p["breakout_lookback"])
++    prior_high = max(b.high for b in bars[-1 - lb:-1])
++    m["prior_20d_high"] = prior_high
++
++    # ---- setup detection (breakout takes precedence)
++    is_breakout = t.close > prior_high and t.close > sma50
++    if is_breakout:
++        res.setup = BREAKOUT
++        _check(res, "close>prior_20d_high", True)
++        _check(res, "close>sma50", True)
++        conf = _check(res, "range_pos>=0.5",
++                      m["range_pos"] is not None and m["range_pos"] >= p["min_range_pos"])
++        conf &= _check(res, "rvol20>=1.5", m["rvol20"] >= p["breakout_min_rvol"])
++        res.pivot = t.high
++        res.invalidation = prior_high
++    else:
++        uptrend = _check(res, "close>sma50", t.close > sma50)
++        uptrend &= _check(res, "sma20>sma50", sma20 > sma50)
++        k = int(p["pullback_touch_lookback"])
++        touched = _check(res, "low_touched_zone_last3",
++                         min(b.low for b in bars[-k:]) <= zone_hi)
++        held = _check(res, "close>=zone_lo", t.close >= zone_lo)
++        if not (uptrend and touched and held):
++            res.label = WATCH
++            res.reason = "no qualifying setup"
++            return res
++        res.setup = PULLBACK
++        res.pivot = sma20
++        res.invalidation = zone_lo
++        if not _check(res, "rs20>0", m["rs20_pp"] > 0.0):
++            res.label = WATCH
++            res.reason = "pullback structure but relative strength not positive"
++            return res
++        conf = _check(res, "close>prev_close", t.close > prev.close)
++        conf &= _check(res, "range_pos>=0.5",
++                       m["range_pos"] is not None and m["range_pos"] >= p["min_range_pos"])
++        conf &= _check(res, "low_t<=zone_hi", t.low <= zone_hi)
++        conf &= _check(res, "close>=sma20", t.close >= sma20)
++        conf &= _check(res, "rvol20>=0.8", m["rvol20"] >= p["pullback_min_rvol"])
++
++    # ---- extension penalty (applies to any setup)
++    ext = m["ext_atr"]
++    if ext > p["ext_block_atr"]:
++        res.flags.append("OVEREXTENDED")
++        res.label = WATCH
++        res.reason = f"setup present but extension {ext:.2f} ATR > {p['ext_block_atr']}"
++        return res
++    if ext > p["ext_flag_atr"]:
++        res.flags.append("EXTENDED")
++        conf = False
++        res.reason = f"extension {ext:.2f} ATR caps tier at RESEARCH_PASS"
++
++    res.label = CONFIRMED_SETUP if conf else RESEARCH_PASS
++    if not res.reason:
++        res.reason = ("all confirmation conditions met" if conf
++                      else "setup present; confirmation incomplete")
++    return res
++
++
++# ----------------------------------------------------------- ranking/select
++
++
++def rank_key(r: Result):
++    return (TIER_ORDER[r.label], SETUP_ORDER[r.setup],
++            -(r.metrics["rs20_pp"]), -(r.metrics["rvol20"]), r.symbol)
++
++
++def select(results: Sequence[Result], bars_by_symbol: Dict[str, Sequence[Bar]],
++           p: Dict[str, float] = PARAMS) -> Dict[str, object]:
++    eligible = sorted([r for r in results if r.label in TIER_ORDER], key=rank_key)
++    chosen: List[Result] = []
++    skipped: List[Dict[str, object]] = []
++    corr_log: List[Dict[str, object]] = []
++    for r in eligible:
++        if len(chosen) >= int(p["max_candidates"]):
++            break
++        blocked_by = None
++        for c in chosen:
++            cr = correlation(bars_by_symbol[r.symbol], bars_by_symbol[c.symbol],
++                             int(p["corr_window"]), int(p["corr_min_overlap"]))
++            corr_log.append({"pair": [c.symbol, r.symbol], **cr})
++            if cr["r"] is None:
++                r.flags.append(f"CORRELATION_UNAVAILABLE_WITH_{c.symbol}")
++            elif abs(cr["r"]) >= p["corr_flag"]:
++                blocked_by = c.symbol
++                break
++        if blocked_by:
++            r.flags.append(f"CORRELATED_WITH_{blocked_by}")
++            skipped.append({"symbol": r.symbol, "reason": f"|r|>={p['corr_flag']} vs {blocked_by}"})
++            continue
++        chosen.append(r)
++    return {
++        "verdict": "CANDIDATES" if chosen else "NO_CANDIDATES",
++        "shortlist": [r.symbol for r in chosen],
++        "skipped_for_correlation": skipped,
++        "correlation_log": corr_log,
++    }
++
++
++def regime(bars_by_symbol: Dict[str, Sequence[Bar]]) -> Dict[str, object]:
++    """RECORDED ONLY in V1.1. Breadth is watchlist breadth, not market breadth."""
++    def above(sym: str, n: int) -> Optional[bool]:
++        bars = bars_by_symbol.get(sym)
++        if not bars:
++            return None
++        s = sma([b.close for b in bars], n)
++        return None if s is None else bars[-1].close > s
++
++    usable50 = [s for s in bars_by_symbol if above(s, 50) is not None]
++    usable20 = [s for s in bars_by_symbol if above(s, 20) is not None]
++    b50 = (sum(above(s, 50) for s in usable50) / len(usable50)) if usable50 else None
++    b20 = (sum(above(s, 20) for s in usable20) / len(usable20)) if usable20 else None
++    sectors = [s for s in SECTOR_ETFS if above(s, 20) is not None]
++    spy50, qqq50 = above("SPY", 50), above("QQQ", 50)
++    if spy50 and qqq50 and b50 is not None and b50 >= 0.60:
++        label = "RISK_ON"
++    elif spy50 is False and qqq50 is False and b50 is not None and b50 < 0.40:
++        label = "RISK_OFF"
++    else:
++        label = "MIXED"
++    return {
++        "label": label,
++        "spy_above_sma50": spy50,
++        "qqq_above_sma50": qqq50,
++        "watchlist_breadth_above_sma50": b50,
++        "watchlist_breadth_above_sma20": b20,
++        "sector_etfs_above_sma20": sum(above(s, 20) for s in sectors),
++        "sector_etfs_counted": len(sectors),
++        "status": "RECORDED_ONLY",
++    }
+diff --git a/scanner/tests/fixtures/README.md b/scanner/tests/fixtures/README.md
+new file mode 100644
+index 0000000..691a2a1
+--- /dev/null
++++ b/scanner/tests/fixtures/README.md
+@@ -0,0 +1,7 @@
++# Golden fixtures — SYNTHETIC
++
++These bars are synthetic and dated in 2099 on purpose. They are not market data and must never be used as evidence about any real instrument.
++
++Each symbol is engineered to hit one rule path of SCANNER-V1.1. The intended label for each symbol is in `scanner/reference/make_fixtures.py` (`INTENDED`), and the exact expected output is in `expected_output.json`.
++
++Never edit these files to make an implementation pass. A mismatch means the implementation, or the spec, is wrong; log it in `DECISION_LOG.md`.
+diff --git a/scanner/tests/fixtures/bars/BRKC.csv b/scanner/tests/fixtures/bars/BRKC.csv
+new file mode 100644
+index 0000000..b082bf8
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/BRKC.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,99.9669,100.3632,99.8909,100.3568,4930039
++2099-02-26,100.1418,101.7721,100.0831,101.4106,4963316
++2099-02-27,101.3276,101.3800,101.0452,101.1481,5603144
++2099-03-02,101.3247,102.2317,100.4758,102.0538,4299496
++2099-03-03,102.0880,102.7048,101.8148,102.2013,5089724
++2099-03-04,102.2567,102.7559,102.2545,102.3475,4297003
++2099-03-05,102.3733,104.7020,102.1285,103.8212,5617051
++2099-03-06,103.9283,104.4286,103.6778,104.2308,4890768
++2099-03-09,104.3462,105.1888,103.6599,104.5166,5381744
++2099-03-10,104.6183,105.4405,104.4505,105.2876,5363299
++2099-03-11,105.3794,106.5102,105.2011,106.3154,4761544
++2099-03-12,106.2040,106.7723,106.0208,106.6146,5016365
++2099-03-13,106.5259,107.3875,106.1049,107.3106,5003742
++2099-03-16,107.3937,107.5498,106.9978,107.0056,4897542
++2099-03-17,107.3382,107.4336,106.7965,107.0911,4843962
++2099-03-18,107.3864,107.5892,107.0354,107.1309,4253318
++2099-03-19,107.0691,107.5290,104.9840,106.5959,5191073
++2099-03-20,106.8506,106.8987,105.4512,105.9509,5455911
++2099-03-23,105.6212,105.7071,104.4793,105.2345,5107197
++2099-03-24,105.2524,105.6661,104.9108,105.3995,5561184
++2099-03-25,105.5668,105.7345,105.3879,105.6067,5051824
++2099-03-26,105.4400,106.0960,105.2959,105.7205,4987841
++2099-03-27,106.1575,106.4594,106.0295,106.0815,5008769
++2099-03-30,105.6226,105.7815,105.1698,105.5497,4354316
++2099-03-31,105.3113,105.8361,105.2318,105.8160,5269143
++2099-04-01,106.1812,106.7152,106.1308,106.2846,5163502
++2099-04-02,106.4106,107.4237,106.3268,107.0824,5430883
++2099-04-03,106.9025,107.1652,106.8320,106.8600,4400744
++2099-04-06,107.1306,107.3553,106.9131,106.9242,5581566
++2099-04-07,107.1153,107.5890,105.8458,105.9521,5263849
++2099-04-08,106.0410,107.1283,105.4882,105.9498,4525850
++2099-04-09,105.7535,105.8519,104.5693,104.8712,4610123
++2099-04-10,105.2384,105.6178,104.2871,104.2927,5675484
++2099-04-13,104.2408,106.1614,104.0849,105.2949,4724261
++2099-04-14,105.3357,105.5464,103.9656,104.2198,5300597
++2099-04-15,104.4438,105.6527,103.9734,105.0318,4734046
++2099-04-16,105.2405,105.7231,104.8627,105.5536,4522705
++2099-04-17,105.2747,106.0852,105.1580,105.6724,5433603
++2099-04-20,105.3629,106.4618,105.3195,106.2807,4782774
++2099-04-21,106.7494,106.9813,106.5911,106.9359,4565208
++2099-04-22,107.0220,108.1217,106.4544,107.9274,5525333
++2099-04-23,107.9299,108.9144,106.7373,108.1020,5656500
++2099-04-24,107.9891,108.3500,107.6744,108.0422,4682688
++2099-04-27,107.9892,108.2622,107.5706,107.9744,5439391
++2099-04-28,107.6773,107.9801,107.3253,107.6593,5659614
++2099-04-29,107.7899,108.3261,107.3672,107.9532,5052828
++2099-04-30,108.4045,108.5340,107.4860,107.7681,4878562
++2099-05-01,107.9298,109.6305,107.5400,108.7824,4967983
++2099-05-04,108.8752,109.6592,107.5301,107.8886,4918323
++2099-05-05,108.0138,108.8377,106.9020,107.5042,5518901
++2099-05-06,107.2798,107.5535,106.7774,107.2119,5161592
++2099-05-07,107.2017,107.8871,106.0947,106.1873,4965468
++2099-05-08,106.3484,108.6218,106.3132,107.7178,4724868
++2099-05-11,107.5531,108.3233,105.9254,106.4845,5353436
++2099-05-12,106.6116,106.8433,106.4869,106.6229,5126677
++2099-05-13,106.6773,106.9476,106.3200,106.6068,4812269
++2099-05-14,106.7420,108.4515,106.4714,107.9858,4999998
++2099-05-15,107.6545,108.1029,106.9712,107.0234,4713019
++2099-05-18,107.1231,108.7123,106.9917,108.0327,4756540
++2099-05-19,107.8479,108.3828,107.1407,107.8827,5200907
++2099-05-20,108.2125,108.3760,107.1784,107.7822,4291121
++2099-05-21,107.7772,107.9132,107.0232,107.3483,5725014
++2099-05-22,107.8782,108.2812,107.4971,107.7609,5583528
++2099-05-25,107.6630,107.9375,106.9995,107.0253,4451953
++2099-05-26,107.3928,107.4804,106.6681,106.9746,4397577
++2099-05-27,107.3611,108.0171,106.5658,107.2015,5722812
++2099-05-28,106.9706,108.3908,106.8119,108.3851,4515091
++2099-05-29,108.1896,108.7289,106.5615,106.8210,5493020
++2099-06-01,106.5675,107.8667,106.0750,107.7985,5216703
++2099-06-02,107.7951,108.6563,107.7663,108.4117,4570410
++2099-06-03,108.5006,108.7364,107.4590,108.0971,5517757
++2099-06-04,107.8072,109.0476,107.7583,108.2949,5070191
++2099-06-05,108.0257,108.3749,107.8740,107.9921,5179237
++2099-06-08,108.1279,109.2468,107.8212,109.0591,4304923
++2099-06-09,108.9194,109.2198,108.8360,109.1962,4716813
++2099-06-10,109.1246,109.3308,108.6108,109.0550,4811260
++2099-06-11,108.8050,109.0222,108.3852,108.9058,5039627
++2099-06-12,109.0073,109.3042,108.4977,108.7752,5482626
++2099-06-15,109.0012,109.1295,108.4728,108.6599,4579357
++2099-06-16,108.8129,109.3827,107.8477,108.0868,4260368
++2099-06-17,107.9543,109.6314,107.6907,109.4217,5667518
++2099-06-18,109.4773,109.5069,108.0712,108.1671,4986769
++2099-06-19,107.9493,108.3735,105.5352,105.8269,4382552
++2099-06-22,105.8643,106.3262,105.0073,105.7489,5701717
++2099-06-23,105.9356,105.9597,105.5121,105.6559,4276335
++2099-06-24,105.5738,106.0617,105.2278,105.8920,5367082
++2099-06-25,106.1051,106.8507,105.0515,105.7621,5646642
++2099-06-26,105.8415,105.9330,105.2533,105.6681,4274148
++2099-06-29,105.6829,105.9273,105.2748,105.8788,4767050
++2099-06-30,109.0832,110.2892,108.8640,110.0699,10846262
+diff --git a/scanner/tests/fixtures/bars/BRKE.csv b/scanner/tests/fixtures/bars/BRKE.csv
+new file mode 100644
+index 0000000..4179e47
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/BRKE.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,79.6345,80.5964,79.2638,80.1796,5013294
++2099-02-26,80.0186,80.7947,79.4614,80.5636,5517386
++2099-02-27,80.6222,81.0749,80.3453,80.5019,5463661
++2099-03-02,80.2591,81.0082,80.0043,80.8333,5008422
++2099-03-03,80.8168,81.6222,80.6328,81.4441,5504515
++2099-03-04,81.4598,81.9336,81.2129,81.8080,4426785
++2099-03-05,82.1193,83.3367,81.2238,82.7384,5078406
++2099-03-06,82.8866,82.8875,82.4053,82.4645,5572476
++2099-03-09,82.1555,83.1771,81.6075,82.6627,5241360
++2099-03-10,82.7689,82.9080,82.1207,82.4783,5327581
++2099-03-11,82.3660,82.4546,82.0039,82.2555,5354729
++2099-03-12,82.3925,82.5813,82.3048,82.3292,5627919
++2099-03-13,82.1243,82.6890,81.9788,82.6032,4910652
++2099-03-16,82.5450,83.3836,82.2074,82.9761,4984849
++2099-03-17,82.7688,84.0158,82.1795,83.3950,5095883
++2099-03-18,83.4201,85.0533,83.3280,84.6795,4623185
++2099-03-19,84.9442,85.4640,84.7452,85.2871,4990074
++2099-03-20,85.4131,85.6392,84.5628,84.6417,4415553
++2099-03-23,84.6960,85.0052,84.3004,84.9148,4995387
++2099-03-24,84.6585,85.1386,84.0603,84.7672,5409061
++2099-03-25,84.6181,84.7969,84.5669,84.6744,5275825
++2099-03-26,84.6743,85.7519,84.5455,85.5074,5037706
++2099-03-27,85.5950,86.0914,85.3240,85.5640,5157261
++2099-03-30,85.3325,85.3734,84.7234,84.7334,5374228
++2099-03-31,84.9875,85.0739,84.3025,85.0607,4900181
++2099-04-01,84.9795,85.8001,84.5628,85.0821,4296880
++2099-04-02,85.1525,85.7594,84.4945,84.6527,5079697
++2099-04-03,84.6385,85.1578,84.1920,84.3542,5540995
++2099-04-06,84.3635,84.6974,84.1993,84.2064,4756009
++2099-04-07,84.0794,84.9742,83.6815,84.3630,5052409
++2099-04-08,84.1151,84.8145,83.8975,84.3158,4723063
++2099-04-09,84.3233,84.8816,83.7133,84.5206,5033429
++2099-04-10,84.5328,85.6785,84.1722,85.6208,5252900
++2099-04-13,85.5784,85.7727,85.2342,85.3809,4652770
++2099-04-14,85.2873,85.4553,84.7655,85.1381,5172359
++2099-04-15,85.2573,85.5441,85.1427,85.1810,4296806
++2099-04-16,85.3915,86.1363,85.1736,85.9113,5164350
++2099-04-17,85.7618,85.7938,85.1336,85.7191,5217908
++2099-04-20,85.4935,86.7319,85.3327,86.6282,4810394
++2099-04-21,86.6187,87.0212,85.5310,86.1216,5009495
++2099-04-22,86.2426,86.4151,85.6108,85.7604,5194116
++2099-04-23,85.8118,86.3246,85.6763,85.9039,4455698
++2099-04-24,85.3415,85.7366,84.9296,85.6307,5668421
++2099-04-27,85.4715,85.5939,85.2299,85.4842,5354451
++2099-04-28,85.5390,85.9301,85.4813,85.8866,4995784
++2099-04-29,85.6091,86.6246,85.1270,86.4316,5644847
++2099-04-30,86.5769,86.7232,86.1943,86.6635,5504456
++2099-05-01,86.5574,86.7774,86.2830,86.6941,4292583
++2099-05-04,86.7573,88.1602,86.0842,87.5666,4326910
++2099-05-05,87.1420,88.0840,86.6960,87.9533,4383825
++2099-05-06,87.7064,88.2537,87.3221,88.0052,4845704
++2099-05-07,87.9219,89.6207,87.6800,88.8224,4796479
++2099-05-08,88.4981,88.6452,88.4076,88.5196,4272978
++2099-05-11,88.5303,89.1630,87.9541,88.7841,5566906
++2099-05-12,88.6371,89.5072,88.3256,89.3131,4515950
++2099-05-13,89.3084,89.5545,89.0817,89.4857,4670884
++2099-05-14,89.2536,89.3977,89.2357,89.3562,5477772
++2099-05-15,89.2620,89.8704,88.8289,89.7229,5740248
++2099-05-18,89.4627,89.9289,89.2576,89.6113,5101691
++2099-05-19,89.5493,90.1302,89.1507,89.4704,5604580
++2099-05-20,89.9315,90.7231,89.2036,89.2791,5076795
++2099-05-21,89.2888,91.2604,89.0714,90.3351,5471318
++2099-05-22,90.1469,90.4729,90.0659,90.3987,5085415
++2099-05-25,90.4134,91.7779,89.9051,91.3866,4351307
++2099-05-26,91.3284,92.0479,90.9543,91.9608,4529884
++2099-05-27,91.9572,92.4204,91.8157,92.1847,4380854
++2099-05-28,92.1883,93.8777,91.9254,92.9227,4546247
++2099-05-29,92.9307,93.4653,92.5529,93.4461,4288763
++2099-06-01,93.4963,94.0077,93.3817,93.8936,5596885
++2099-06-02,93.8109,94.3943,93.2408,93.4939,5315718
++2099-06-03,93.2829,93.9323,92.7974,93.9076,4450826
++2099-06-04,93.6516,95.1010,93.5402,94.7869,4942639
++2099-06-05,94.5044,95.8583,94.3988,95.4433,5550388
++2099-06-08,95.6543,96.7450,95.4402,96.3952,4968744
++2099-06-09,96.8033,98.1182,96.7510,97.6427,4909425
++2099-06-10,97.3452,98.9401,97.0438,98.2740,4941030
++2099-06-11,98.5302,100.2449,98.3940,99.8315,4773207
++2099-06-12,99.6291,100.0184,98.8559,99.3243,4926341
++2099-06-15,98.9439,100.1852,98.9001,99.5782,4510575
++2099-06-16,99.5597,100.4031,98.2960,98.4682,4540462
++2099-06-17,98.1723,99.4408,97.9490,99.3468,4620875
++2099-06-18,99.3989,99.9773,99.2524,99.8004,4786617
++2099-06-19,99.6623,101.2325,99.3136,101.2107,5305231
++2099-06-22,100.9677,101.8471,100.6265,101.3931,5174455
++2099-06-23,101.6579,101.8357,100.5561,100.5660,5039080
++2099-06-24,100.8083,101.8631,100.6023,101.7396,5521947
++2099-06-25,101.6215,102.1444,101.2271,101.3277,5219934
++2099-06-26,101.7861,102.0301,100.6011,100.9622,5503357
++2099-06-29,101.1468,101.5751,100.5146,101.2597,4903322
++2099-06-30,101.8380,103.2680,101.6337,103.1659,9490896
+diff --git a/scanner/tests/fixtures/bars/BRKX.csv b/scanner/tests/fixtures/bars/BRKX.csv
+new file mode 100644
+index 0000000..b890022
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/BRKX.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,59.5316,59.9352,59.2950,59.9078,5109735
++2099-02-26,59.8507,59.9632,59.8174,59.8213,5242595
++2099-02-27,59.6657,60.0726,59.5687,60.0611,5463099
++2099-03-02,60.2560,60.3403,59.6344,59.7679,4316130
++2099-03-03,59.7833,59.9698,59.7114,59.8617,4692627
++2099-03-04,59.9106,60.0079,59.4822,59.5763,5560904
++2099-03-05,59.4774,59.9590,59.3354,59.8922,5320665
++2099-03-06,60.0736,60.1648,60.0240,60.0484,5645553
++2099-03-09,59.9294,60.6145,59.9047,60.4128,4935414
++2099-03-10,60.5742,60.6837,60.2499,60.4423,5144741
++2099-03-11,60.6693,60.6767,60.4701,60.6354,4681314
++2099-03-12,60.6546,60.7721,60.4412,60.7047,4534113
++2099-03-13,60.8390,60.9075,60.6029,60.6916,4477761
++2099-03-16,60.5448,60.9721,60.5212,60.8394,4313459
++2099-03-17,60.8710,60.9030,60.6218,60.7317,4535053
++2099-03-18,60.6491,60.8362,60.5767,60.7885,4690095
++2099-03-19,60.6929,61.1327,60.3891,61.0371,4298809
++2099-03-20,61.0767,61.2546,61.0399,61.1697,5651135
++2099-03-23,61.1152,61.2847,61.0596,61.2168,5148901
++2099-03-24,61.1553,61.8673,60.8957,61.7413,4833637
++2099-03-25,61.6599,61.9613,61.4304,61.8756,5585251
++2099-03-26,61.9455,61.9979,61.8599,61.8904,5416181
++2099-03-27,61.9250,62.0506,61.9014,62.0438,5148603
++2099-03-30,61.8645,62.1904,61.8495,62.0706,5190629
++2099-03-31,62.1336,62.2590,61.8952,62.1230,4741909
++2099-04-01,62.2285,62.2585,62.1103,62.1820,5322632
++2099-04-02,62.2279,62.7819,62.1658,62.6841,5076933
++2099-04-03,62.3172,62.9495,62.2481,62.8138,5582426
++2099-04-06,62.7544,63.0152,62.6849,62.9725,5643383
++2099-04-07,62.8859,63.4007,62.7382,63.2258,4648739
++2099-04-08,63.1098,63.8867,63.0249,63.7348,5289678
++2099-04-09,63.7848,63.9177,63.6921,63.8195,4847296
++2099-04-10,63.5797,63.8765,63.4123,63.8277,4823298
++2099-04-13,63.9034,64.4347,63.8963,64.4292,5064457
++2099-04-14,64.3883,64.4221,64.1642,64.2759,4976063
++2099-04-15,64.3075,64.5091,64.2546,64.3337,5183427
++2099-04-16,64.2150,64.8345,64.1711,64.5910,5284064
++2099-04-17,64.5491,65.3426,64.3824,65.1627,5743208
++2099-04-20,65.0618,65.1635,64.9207,65.1074,5492166
++2099-04-21,65.0153,65.1117,64.6232,64.7634,4901648
++2099-04-22,64.8071,65.1436,64.6937,65.0215,5517424
++2099-04-23,64.9958,65.2369,64.5091,65.0497,5640245
++2099-04-24,64.8112,65.2361,64.7162,65.1042,5246108
++2099-04-27,65.1760,65.3577,65.1368,65.3245,5668799
++2099-04-28,65.3615,65.6599,65.2008,65.4990,5541889
++2099-04-29,65.5408,65.7412,65.4751,65.6872,4284814
++2099-04-30,65.5147,65.7560,65.4167,65.7336,5690095
++2099-05-01,65.5290,66.2381,65.4647,66.1193,4546931
++2099-05-04,66.1187,66.5719,66.0936,66.5501,4400969
++2099-05-05,66.7016,66.8276,66.5673,66.6896,5289877
++2099-05-06,66.5603,66.8369,66.5432,66.7326,5060793
++2099-05-07,66.7267,67.0709,66.4737,67.0128,4617060
++2099-05-08,66.8949,67.4135,66.8576,67.2429,4467367
++2099-05-11,67.2444,67.2985,66.9842,67.1675,4895304
++2099-05-12,67.3200,67.3825,67.1318,67.2091,5528606
++2099-05-13,67.3440,67.8803,67.1281,67.5551,5508750
++2099-05-14,67.7290,67.8012,67.5026,67.6707,5356441
++2099-05-15,67.6474,67.7567,67.3686,67.7393,4900565
++2099-05-18,67.9589,67.9675,67.7584,67.9179,5116478
++2099-05-19,67.9545,68.1242,67.6538,68.0469,4644377
++2099-05-20,68.1251,68.9557,68.0723,68.8630,5237226
++2099-05-21,68.8797,69.4228,68.7428,69.2905,4644803
++2099-05-22,69.1467,70.5123,69.0121,70.4856,4351493
++2099-05-25,70.6038,71.4948,70.5739,71.3736,5008548
++2099-05-26,71.4792,72.3626,71.3909,72.0424,4894334
++2099-05-27,71.9543,73.1881,71.8698,73.1186,4998516
++2099-05-28,72.9844,74.2991,72.9097,74.0638,4623015
++2099-05-29,74.0598,75.0563,74.0015,74.9565,4552192
++2099-06-01,74.9579,76.1892,74.7973,76.0916,4598479
++2099-06-02,76.1657,77.6596,76.1373,77.5208,5720801
++2099-06-03,77.4906,78.6332,77.3553,78.5798,5614808
++2099-06-04,78.6127,79.9307,78.5441,79.8965,4265019
++2099-06-05,80.1697,81.5159,79.9381,81.3723,5730093
++2099-06-08,81.1838,82.3032,81.0977,82.0996,4577242
++2099-06-09,82.0886,83.1357,81.9729,82.9559,4790306
++2099-06-10,83.0773,84.5225,82.9056,84.1446,5736456
++2099-06-11,84.3403,84.9918,84.2417,84.7231,4799754
++2099-06-12,84.5152,85.7580,84.4317,85.6719,5166758
++2099-06-15,85.4643,87.0548,85.2872,87.0323,5019995
++2099-06-16,87.2557,88.5118,87.0222,88.3490,4346234
++2099-06-17,88.1121,89.7512,87.9662,89.5628,5186916
++2099-06-18,89.4139,90.1972,89.4043,90.1283,5240241
++2099-06-19,90.1781,91.9091,90.0667,91.8455,5331725
++2099-06-22,91.6484,93.1066,91.5186,93.0994,4640028
++2099-06-23,92.9735,94.5187,92.7041,94.4309,4416201
++2099-06-24,94.3194,95.9357,94.2542,95.7042,5179899
++2099-06-25,95.5587,96.3955,95.5268,96.3599,4421749
++2099-06-26,96.2666,97.2262,96.0611,97.1015,4876655
++2099-06-29,97.0629,98.1324,96.8197,97.9123,5567695
++2099-06-30,98.0343,99.7025,97.9361,99.6044,10062857
+diff --git a/scanner/tests/fixtures/bars/CHEAP.csv b/scanner/tests/fixtures/bars/CHEAP.csv
+new file mode 100644
+index 0000000..4e1aad8
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/CHEAP.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,5.9247,5.9430,5.9134,5.9386,21703202
++2099-02-26,5.9501,5.9994,5.9401,5.9729,18070459
++2099-02-27,5.9631,6.0486,5.9564,6.0442,20704853
++2099-03-02,6.0329,6.0455,6.0145,6.0253,19580425
++2099-03-03,6.0128,6.0244,5.9121,5.9573,21967731
++2099-03-04,5.9601,6.0006,5.9521,5.9653,20180969
++2099-03-05,5.9749,6.0386,5.9290,6.0057,18403590
++2099-03-06,6.0217,6.1257,5.9761,6.0837,17785097
++2099-03-09,6.0824,6.0928,6.0063,6.0219,18123310
++2099-03-10,6.0268,6.0739,5.9524,5.9561,19821272
++2099-03-11,5.9628,6.0150,5.9539,6.0100,17908721
++2099-03-12,6.0150,6.0616,5.9876,6.0506,18551156
++2099-03-13,6.0600,6.2037,6.0342,6.1555,17409394
++2099-03-16,6.1586,6.2347,6.1384,6.2282,17815848
++2099-03-17,6.2148,6.2368,6.2075,6.2344,19013743
++2099-03-18,6.2452,6.2853,6.2159,6.2297,17613763
++2099-03-19,6.2510,6.4084,6.2440,6.4023,17924338
++2099-03-20,6.3986,6.4006,6.3898,6.3966,22939624
++2099-03-23,6.3848,6.3960,6.3149,6.3592,18387648
++2099-03-24,6.3554,6.3639,6.2792,6.2996,19673152
++2099-03-25,6.3083,6.3394,6.2860,6.3182,19889243
++2099-03-26,6.2999,6.3474,6.2874,6.3400,22330848
++2099-03-27,6.3258,6.3896,6.3251,6.3308,22707445
++2099-03-30,6.3428,6.3453,6.3276,6.3395,20721142
++2099-03-31,6.3264,6.3903,6.3230,6.3695,21804213
++2099-04-01,6.3732,6.4319,6.3526,6.4264,20870297
++2099-04-02,6.4434,6.5145,6.4169,6.5097,22475731
++2099-04-03,6.5083,6.5774,6.5035,6.5364,18097601
++2099-04-06,6.5363,6.5788,6.4085,6.4325,18926759
++2099-04-07,6.4449,6.4979,6.4269,6.4905,17768013
++2099-04-08,6.4709,6.4988,6.4103,6.4113,21584093
++2099-04-09,6.4063,6.4448,6.3757,6.4131,19989264
++2099-04-10,6.3894,6.4017,6.3081,6.3314,19238548
++2099-04-13,6.3192,6.3636,6.3125,6.3442,21980928
++2099-04-14,6.3316,6.3777,6.2918,6.3075,22181401
++2099-04-15,6.3184,6.3546,6.2969,6.3336,21422138
++2099-04-16,6.3348,6.5580,6.3174,6.5553,18476357
++2099-04-17,6.5641,6.6092,6.5542,6.5653,19937092
++2099-04-20,6.5959,6.6568,6.5868,6.6337,17577640
++2099-04-21,6.6691,6.6707,6.5362,6.5592,21879827
++2099-04-22,6.5362,6.5704,6.5124,6.5534,22069894
++2099-04-23,6.5609,6.6504,6.5496,6.6099,21956369
++2099-04-24,6.6197,6.6282,6.6111,6.6170,21447832
++2099-04-27,6.6102,6.6786,6.5984,6.6547,20546847
++2099-04-28,6.6644,6.6926,6.6561,6.6749,17720738
++2099-04-29,6.6890,6.7419,6.6194,6.6211,22882231
++2099-04-30,6.6168,6.6883,6.6001,6.6717,18298659
++2099-05-01,6.6720,6.6947,6.6218,6.6309,19304984
++2099-05-04,6.6239,6.7750,6.6132,6.7682,18867012
++2099-05-05,6.7790,6.8006,6.7251,6.7476,20121203
++2099-05-06,6.7419,6.8342,6.7292,6.8074,22326483
++2099-05-07,6.8119,6.8379,6.7967,6.8211,22078960
++2099-05-08,6.8192,6.9027,6.8188,6.8997,19821071
++2099-05-11,6.8948,6.9009,6.8406,6.8720,18422306
++2099-05-12,6.8554,6.9818,6.8472,6.9544,19718179
++2099-05-13,6.9521,6.9905,6.8876,6.9597,21304433
++2099-05-14,6.9405,7.0747,6.8775,7.0615,20117211
++2099-05-15,7.0804,7.1237,7.0293,7.1197,20065825
++2099-05-18,7.0993,7.1443,7.0668,7.1440,18686286
++2099-05-19,7.1248,7.1495,7.0608,7.1026,20903201
++2099-05-20,7.1084,7.1846,7.1039,7.1713,20865320
++2099-05-21,7.1662,7.2204,7.1183,7.2192,22227753
++2099-05-22,7.2288,7.3912,7.2128,7.3522,21541495
++2099-05-25,7.3321,7.3576,7.2904,7.3392,18459463
++2099-05-26,7.3357,7.4195,7.2594,7.3946,21798716
++2099-05-27,7.3704,7.4519,7.3249,7.4469,19296622
++2099-05-28,7.4463,7.5027,7.4068,7.4829,17138934
++2099-05-29,7.4708,7.5220,7.4622,7.5134,18500866
++2099-06-01,7.5174,7.5499,7.5038,7.5422,18522297
++2099-06-02,7.5571,7.5833,7.4830,7.5121,17479643
++2099-06-03,7.5137,7.5166,7.4504,7.4509,17988805
++2099-06-04,7.4469,7.4585,7.4107,7.4363,20140994
++2099-06-05,7.4428,7.4966,7.4147,7.4951,20353113
++2099-06-08,7.4896,7.6272,7.4377,7.6234,17045077
++2099-06-09,7.6075,7.7362,7.5874,7.7131,18237513
++2099-06-10,7.6900,7.8335,7.6424,7.8097,21558834
++2099-06-11,7.8105,7.8867,7.7736,7.8861,17734219
++2099-06-12,7.8808,7.9612,7.8516,7.9569,21641173
++2099-06-15,7.9573,7.9962,7.9258,7.9874,19620077
++2099-06-16,7.9825,8.1245,7.9698,8.0650,17750222
++2099-06-17,8.0678,8.2545,8.0432,8.2242,20596538
++2099-06-18,8.1992,8.2751,8.1933,8.2137,22421562
++2099-06-19,8.2023,8.2307,8.1556,8.1732,18586203
++2099-06-22,8.1677,8.3737,8.1621,8.3497,18180724
++2099-06-23,8.3607,8.4144,8.3014,8.3868,19319410
++2099-06-24,8.3878,8.4982,8.3789,8.4850,22774312
++2099-06-25,8.4964,8.5894,8.4949,8.5762,18361071
++2099-06-26,8.6121,8.6315,8.4662,8.4959,19806441
++2099-06-29,8.5152,8.7885,8.5085,8.7196,18284526
++2099-06-30,8.7403,8.9258,8.7190,8.8919,20585982
+diff --git a/scanner/tests/fixtures/bars/DOWN.csv b/scanner/tests/fixtures/bars/DOWN.csv
+new file mode 100644
+index 0000000..73e7b81
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/DOWN.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,197.1077,199.2456,197.1014,197.8741,4901373
++2099-02-26,198.0390,198.4740,195.8304,196.5537,5343260
++2099-02-27,196.7646,198.1950,194.0979,195.0217,5745024
++2099-03-02,194.9930,195.3830,193.7379,193.9372,4966335
++2099-03-03,193.9851,195.2146,193.1422,194.4751,5078154
++2099-03-04,194.6951,194.9646,190.0512,191.2200,4472398
++2099-03-05,190.3819,190.4379,188.7930,190.1310,5748418
++2099-03-06,190.1249,190.1741,188.3330,188.8220,4900022
++2099-03-09,188.8007,188.9329,185.8489,186.9206,4292112
++2099-03-10,186.2561,187.2366,185.9269,186.1873,5103324
++2099-03-11,186.8973,187.3870,185.5925,185.6288,5270129
++2099-03-12,185.7614,189.2472,185.5314,188.7419,5043691
++2099-03-13,188.8009,189.1987,188.3195,188.6314,4970901
++2099-03-16,188.5844,188.7946,188.0101,188.0557,4519191
++2099-03-17,187.6243,189.6597,186.7248,188.7970,4287495
++2099-03-18,188.1785,189.1840,186.3516,186.6496,4420542
++2099-03-19,187.3290,188.8507,184.4235,185.1923,4325316
++2099-03-20,184.5045,186.2526,184.1950,185.4561,4912633
++2099-03-23,185.5411,185.6480,184.1099,184.1552,4250011
++2099-03-24,183.9813,184.1269,181.8761,182.1526,5690271
++2099-03-25,181.6521,181.9202,179.9783,180.7646,4283732
++2099-03-26,180.8111,180.8400,177.7708,178.2634,5199828
++2099-03-27,178.4859,180.9852,178.1187,179.3634,4649876
++2099-03-30,179.7707,180.7660,179.7648,180.6440,4918103
++2099-03-31,180.2955,184.6500,179.8936,183.8949,4608577
++2099-04-01,183.9864,185.5507,182.7033,182.9148,4453008
++2099-04-02,182.6892,183.0018,181.8202,182.0327,5676870
++2099-04-03,181.7970,181.8951,180.0751,181.2003,5026208
++2099-04-06,180.5363,182.1976,179.7431,181.4340,5211678
++2099-04-07,181.1987,181.4846,180.6471,180.9095,5583588
++2099-04-08,180.8500,182.3459,179.4307,181.5126,4825263
++2099-04-09,181.5708,181.6256,180.2523,180.5213,5068367
++2099-04-10,180.5996,180.8989,176.4829,177.9216,5438176
++2099-04-13,178.1298,179.8745,177.9200,179.6556,4942265
++2099-04-14,179.5186,179.6999,178.1254,178.4029,4680438
++2099-04-15,178.8073,180.1238,178.3992,179.5235,5275951
++2099-04-16,179.7183,180.4938,178.4700,178.5004,4590334
++2099-04-17,178.6495,179.4889,177.3209,178.1697,4389525
++2099-04-20,177.7278,178.0581,174.5291,175.2660,5276068
++2099-04-21,175.2716,175.6007,173.1206,173.3708,5559912
++2099-04-22,173.8841,174.4013,171.8426,173.3990,4991864
++2099-04-23,173.2387,173.8832,172.8081,173.7015,5412712
++2099-04-24,173.4509,173.6015,172.2650,172.8549,5168435
++2099-04-27,172.8454,173.1706,171.5537,172.5338,4998148
++2099-04-28,172.7800,172.8163,169.2831,169.4689,4724756
++2099-04-29,169.1305,170.0998,168.8515,169.0139,4370975
++2099-04-30,169.1683,169.5273,167.5429,167.5936,4478519
++2099-05-01,167.8575,169.5211,164.9428,165.7048,5707141
++2099-05-04,165.8828,165.9309,165.2243,165.6708,5437405
++2099-05-05,165.1756,165.6367,164.4994,164.5778,5104158
++2099-05-06,164.7347,165.1856,162.7414,162.9214,5217087
++2099-05-07,163.1536,163.4447,161.8364,161.9153,5678060
++2099-05-08,161.9741,162.2910,160.7046,160.9196,4603080
++2099-05-11,160.9140,161.6168,159.5100,160.0623,5117198
++2099-05-12,160.1779,160.6747,159.6367,159.6742,5671696
++2099-05-13,160.1069,160.3692,157.7320,158.6268,4628440
++2099-05-14,159.0110,159.3786,158.1604,159.3064,4932422
++2099-05-15,159.2334,161.2596,158.3511,160.8297,4798246
++2099-05-18,160.4945,163.5991,160.2221,161.6449,5712195
++2099-05-19,161.2873,161.8564,160.3743,160.7152,5081355
++2099-05-20,160.7509,160.8268,157.9758,159.4053,5500760
++2099-05-21,159.0897,159.7037,157.8632,159.4190,5509786
++2099-05-22,159.4790,159.4937,158.1714,158.6675,4418361
++2099-05-25,158.5222,160.4133,158.3801,159.9296,4322843
++2099-05-26,160.3510,161.0885,159.5013,159.7302,5004090
++2099-05-27,159.6659,160.6040,159.0104,159.8316,4736318
++2099-05-28,159.7423,159.7633,157.8208,158.6139,4846461
++2099-05-29,158.7375,159.1624,157.1144,158.3473,5701542
++2099-06-01,158.3653,158.5754,156.3525,156.4757,5703259
++2099-06-02,156.5140,156.5824,152.9747,154.1386,4333697
++2099-06-03,154.1066,154.3091,153.1000,153.9188,4306766
++2099-06-04,154.4690,155.1529,151.7465,152.0696,5024009
++2099-06-05,152.1991,152.9205,149.4731,150.8657,5277238
++2099-06-08,151.2998,153.4501,151.2129,151.4675,5728102
++2099-06-09,151.7460,154.0033,151.1782,152.9256,5043441
++2099-06-10,152.9396,153.0310,152.5071,152.5276,4972959
++2099-06-11,151.9338,152.8124,151.4227,151.5446,4627951
++2099-06-12,152.2709,153.0082,151.9046,152.0166,4435623
++2099-06-15,152.2178,153.3988,151.7092,152.7227,5030319
++2099-06-16,151.9970,153.3251,151.0452,152.9057,4623673
++2099-06-17,153.1190,153.5313,151.1160,151.3908,4607257
++2099-06-18,151.6287,151.8865,148.8274,150.3371,5456463
++2099-06-19,149.8020,151.1186,149.6763,151.1139,5741247
++2099-06-22,151.5629,152.3739,148.9134,149.3388,4892286
++2099-06-23,148.9849,149.6775,148.5254,148.9695,5467632
++2099-06-24,148.9479,150.1330,148.7543,149.9753,5407059
++2099-06-25,150.1758,150.8377,150.0518,150.7556,4640500
++2099-06-26,151.1484,151.6656,148.5310,149.5244,4559000
++2099-06-29,149.5228,149.9159,148.4535,148.7307,4825669
++2099-06-30,148.9226,149.2468,147.7504,148.0281,5674516
+diff --git a/scanner/tests/fixtures/bars/PULC.csv b/scanner/tests/fixtures/bars/PULC.csv
+new file mode 100644
+index 0000000..7614ada
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/PULC.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,150.5489,151.3321,149.1613,150.9748,4733772
++2099-02-26,151.0290,151.4435,150.2261,150.2279,5026940
++2099-02-27,150.2487,150.7637,150.1127,150.2464,5558760
++2099-03-02,150.3398,151.0726,149.8907,150.9023,5725770
++2099-03-03,150.8650,153.6610,150.8486,152.6185,5424914
++2099-03-04,152.5315,155.0310,152.4065,153.2322,4387344
++2099-03-05,152.7414,153.6258,152.3953,152.5737,4782250
++2099-03-06,152.2903,154.0385,151.8666,153.4234,4866051
++2099-03-09,153.1413,153.8193,152.9848,153.1178,5670865
++2099-03-10,152.7840,155.3861,152.5632,154.6692,5746216
++2099-03-11,154.8794,155.8059,152.9046,155.0901,4821097
++2099-03-12,154.9135,157.3932,154.4089,157.0917,4371290
++2099-03-13,157.5192,158.9781,157.3252,157.6174,4974647
++2099-03-16,157.6754,157.6892,156.6268,157.4396,4464625
++2099-03-17,157.6968,158.0577,156.2451,156.9120,4916272
++2099-03-18,157.0083,157.7950,156.7163,157.2566,4623082
++2099-03-19,157.1304,158.8314,156.8377,158.2357,5388855
++2099-03-20,158.5127,159.9521,157.7088,159.8098,4345787
++2099-03-23,159.3477,160.7116,159.2872,160.6621,4660020
++2099-03-24,160.6994,161.5954,160.4985,160.7111,4445320
++2099-03-25,160.7027,162.0285,160.6855,161.7563,5673446
++2099-03-26,161.5512,161.9021,160.8556,161.2413,5419314
++2099-03-27,161.6130,162.5492,161.5249,162.2933,4465303
++2099-03-30,161.8945,162.5690,161.0083,162.3338,4633865
++2099-03-31,162.7274,165.1885,161.6701,164.1976,4524425
++2099-04-01,164.2991,165.9603,163.2391,165.6683,4629335
++2099-04-02,165.5344,166.9757,164.7631,166.6344,4944869
++2099-04-03,166.1801,167.6647,165.8482,166.4496,5507404
++2099-04-06,166.8078,168.9486,166.4775,167.5739,5405482
++2099-04-07,167.6420,169.6434,167.4866,168.5528,5565256
++2099-04-08,168.3992,168.7682,168.2934,168.7643,5660268
++2099-04-09,168.9787,169.5838,167.8262,168.9145,5483438
++2099-04-10,168.6729,171.1528,168.0465,170.6636,4558698
++2099-04-13,170.7412,171.8480,170.2562,171.0042,4538822
++2099-04-14,170.7894,172.1856,169.2749,172.0674,5042410
++2099-04-15,172.2536,175.3475,172.1302,173.9521,4384300
++2099-04-16,173.4826,173.9171,172.6135,173.3561,4990361
++2099-04-17,173.2451,176.6171,172.8779,175.5982,5325888
++2099-04-20,176.2103,177.4696,175.5678,177.1902,5307738
++2099-04-21,177.4746,177.7877,177.0851,177.3254,4865410
++2099-04-22,176.9318,177.2674,176.4781,177.1910,4478949
++2099-04-23,176.8991,177.0745,176.2458,176.8189,4547104
++2099-04-24,176.9052,178.4273,176.1483,178.3530,4927135
++2099-04-27,177.7910,178.7649,176.4475,176.7726,4415119
++2099-04-28,176.8718,178.5491,176.6360,178.3034,4274357
++2099-04-29,177.7855,179.5321,176.3447,179.1666,5241923
++2099-04-30,179.3986,180.6451,178.8317,179.2709,4359150
++2099-05-01,179.2750,179.7048,178.8159,179.5323,5437849
++2099-05-04,179.1141,180.6580,179.0148,179.9208,5731665
++2099-05-05,179.2885,182.3737,179.2436,180.4333,5662014
++2099-05-06,180.2763,181.9697,180.0697,181.9581,5093264
++2099-05-07,182.3665,183.8758,181.3582,181.9262,5695296
++2099-05-08,182.4908,183.7381,181.5751,183.6496,5630271
++2099-05-11,183.9585,185.7078,183.2596,185.2911,4859862
++2099-05-12,185.8583,186.0237,185.4715,185.7987,4872041
++2099-05-13,185.4377,189.4741,185.2323,187.1095,4646874
++2099-05-14,188.3627,188.5070,186.6189,187.3506,5593166
++2099-05-15,186.7217,188.8573,186.1081,188.1521,5734255
++2099-05-18,188.1725,190.0867,187.4219,189.3747,5328180
++2099-05-19,189.7766,192.6432,189.4838,191.9690,4831967
++2099-05-20,192.3624,194.1348,192.2555,192.6882,5326097
++2099-05-21,192.2570,193.8988,191.7191,193.3140,4518553
++2099-05-22,193.7988,195.3969,192.7801,194.1187,5016505
++2099-05-25,194.2268,195.4521,193.3330,194.7179,5138473
++2099-05-26,194.5223,195.4525,193.4158,194.4468,5296514
++2099-05-27,194.2802,197.3333,193.8032,197.0519,5026353
++2099-05-28,197.0498,197.6597,196.7169,197.2270,4543141
++2099-05-29,197.6582,199.2442,197.2460,197.4378,4305677
++2099-06-01,197.1555,197.9678,196.2841,197.5241,5254737
++2099-06-02,197.0432,199.2310,196.6568,198.9970,5396198
++2099-06-03,199.2411,203.2994,197.4151,202.7460,4616009
++2099-06-04,203.3456,207.4363,203.0446,206.6359,4327939
++2099-06-05,206.1933,209.0970,204.3739,208.4844,5201946
++2099-06-08,208.9312,210.2532,208.3505,209.6809,4944914
++2099-06-09,209.5343,211.1473,209.2559,210.4952,5255961
++2099-06-10,210.0316,212.0904,209.3610,210.2775,4827208
++2099-06-11,210.0622,213.2303,209.6779,211.9018,4896645
++2099-06-12,212.2872,213.7518,211.0900,212.6546,5245935
++2099-06-15,212.9062,216.8362,211.8704,215.7307,5370590
++2099-06-16,216.2138,216.7849,215.1281,216.2977,5266371
++2099-06-17,216.7475,217.7215,213.4814,213.9090,4356580
++2099-06-18,213.5056,214.7124,210.2516,210.6568,5733534
++2099-06-19,211.0701,211.0967,205.7993,207.5143,5699367
++2099-06-22,207.6101,208.6985,206.6491,206.9068,5687038
++2099-06-23,206.8788,206.9241,205.9889,206.0216,5458905
++2099-06-24,205.8732,206.3815,201.6138,203.5951,4861195
++2099-06-25,203.3233,203.6868,200.7334,200.8078,5307997
++2099-06-26,200.8222,201.4871,199.5563,199.8882,4599471
++2099-06-29,199.4768,199.5564,197.7877,198.3325,5711965
++2099-06-30,206.5058,210.4491,206.0907,210.0340,5652117
+diff --git a/scanner/tests/fixtures/bars/PULN.csv b/scanner/tests/fixtures/bars/PULN.csv
+new file mode 100644
+index 0000000..5e4b4bc
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/PULN.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,89.5699,90.0367,89.1850,89.6613,5629465
++2099-02-26,89.7635,90.0660,89.4434,89.7412,5474040
++2099-02-27,89.7841,90.4406,89.5781,90.2055,5125604
++2099-03-02,90.2694,90.8584,90.0797,90.7592,5369754
++2099-03-03,90.5762,91.3630,90.3820,91.1881,5143376
++2099-03-04,91.1815,91.4009,91.1449,91.2055,5287257
++2099-03-05,90.9008,91.4942,90.3238,91.3257,4930372
++2099-03-06,91.4646,91.5537,90.9621,91.2363,4870715
++2099-03-09,91.3678,91.5707,90.4918,90.7600,4536819
++2099-03-10,90.8093,90.9140,90.4323,90.5919,5068624
++2099-03-11,90.5331,91.2264,90.4155,90.9340,5291508
++2099-03-12,90.6380,91.6364,90.5986,91.0242,5504849
++2099-03-13,91.1767,91.4089,90.8402,90.9091,5336487
++2099-03-16,91.0218,91.1226,90.3927,90.5272,5037472
++2099-03-17,90.4589,90.6413,90.0740,90.4942,4880586
++2099-03-18,90.3748,90.6645,89.6316,90.2851,5389435
++2099-03-19,90.3596,90.4907,90.2189,90.2983,4736966
++2099-03-20,90.1191,91.1400,89.5658,90.4729,4588134
++2099-03-23,90.4949,90.8099,89.5279,89.6524,5047763
++2099-03-24,89.6309,89.7448,89.5748,89.6203,4332876
++2099-03-25,89.7929,90.0073,88.9029,89.8160,4916551
++2099-03-26,89.7022,90.5063,89.6914,90.2010,4306467
++2099-03-27,90.0752,90.9729,90.0098,90.4778,5635094
++2099-03-30,90.4339,91.7355,90.2241,91.6017,5210156
++2099-03-31,91.5516,92.5850,91.3934,92.5785,5556658
++2099-04-01,92.4340,93.7075,92.0650,93.5024,4311595
++2099-04-02,93.5053,94.0244,93.4969,93.9747,5418815
++2099-04-03,93.8754,94.9292,93.5268,94.1891,4387518
++2099-04-06,94.2144,95.0710,94.1608,94.8003,4385294
++2099-04-07,94.7576,96.1316,94.3062,95.6354,5145925
++2099-04-08,95.7692,96.6951,95.7097,96.3729,4788815
++2099-04-09,96.3616,97.6772,95.8885,97.4071,5453558
++2099-04-10,97.5258,98.2587,97.2650,98.0482,5016104
++2099-04-13,97.7004,99.5564,97.5957,99.5331,4513285
++2099-04-14,99.4874,101.0514,99.0877,100.5885,4705409
++2099-04-15,100.6481,102.5886,100.1410,102.1905,5563580
++2099-04-16,101.8960,103.2266,101.4333,103.1077,4671963
++2099-04-17,103.1273,104.7000,102.8827,103.8374,4884253
++2099-04-20,103.7812,104.4396,103.7693,104.3183,5248566
++2099-04-21,104.5029,105.9769,104.2214,105.4878,4647830
++2099-04-22,105.6761,107.4356,105.6236,106.7706,5327469
++2099-04-23,106.8730,108.1045,106.2616,107.6908,4466894
++2099-04-24,107.4563,108.8711,107.4431,108.7270,5237196
++2099-04-27,108.7055,109.5122,108.4063,109.4792,4723644
++2099-04-28,109.3676,110.2259,109.0734,110.1724,4566782
++2099-04-29,110.0078,111.4276,109.5594,110.9257,4329208
++2099-04-30,110.8835,111.3439,110.3527,110.9834,4914887
++2099-05-01,110.8982,111.6180,110.8051,111.4237,4802065
++2099-05-04,111.4482,112.8969,111.3159,112.3317,4476687
++2099-05-05,111.7525,113.6367,111.1281,113.2857,5161803
++2099-05-06,113.6499,115.0857,113.4681,114.6806,5395308
++2099-05-07,114.4889,116.7459,114.2908,115.8843,5138664
++2099-05-08,116.2798,117.8193,115.5685,117.0054,4883228
++2099-05-11,117.1671,118.1630,116.5687,117.9630,5081129
++2099-05-12,117.7932,118.5364,117.4087,117.8440,4459428
++2099-05-13,117.7809,119.0061,117.0040,118.8085,4319907
++2099-05-14,118.2848,119.6346,118.1517,119.3392,4370033
++2099-05-15,119.5250,120.9727,119.4479,120.5253,5051667
++2099-05-18,120.7101,121.3770,120.2604,121.3521,5337426
++2099-05-19,121.5076,122.3894,121.1244,122.1584,4925078
++2099-05-20,122.1640,122.9957,121.7827,122.8719,4818054
++2099-05-21,122.5783,124.0642,122.1776,123.7095,4684449
++2099-05-22,123.8553,124.4139,123.1861,123.7324,4647583
++2099-05-25,123.6719,124.0605,122.4936,123.9337,5328236
++2099-05-26,123.5904,125.9465,122.9444,125.5198,4976223
++2099-05-27,125.1518,126.7991,124.7136,126.7373,5271570
++2099-05-28,126.9302,127.7140,126.4247,127.5250,5143000
++2099-05-29,127.3821,129.0340,126.8932,128.3654,5025600
++2099-06-01,128.5101,129.2724,127.5994,129.2009,4749195
++2099-06-02,129.3118,132.9377,128.6329,131.9020,5054617
++2099-06-03,131.8678,131.9921,131.6576,131.7747,5643640
++2099-06-04,132.0859,132.2308,130.6631,131.3759,5010965
++2099-06-05,131.5610,131.6768,130.4768,130.6255,4850178
++2099-06-08,130.5586,130.9687,128.3205,129.0005,5702934
++2099-06-09,129.0468,129.3383,128.5702,128.6724,4764114
++2099-06-10,128.8806,129.5367,128.7475,128.9913,4900233
++2099-06-11,129.0710,129.6152,128.9339,129.0790,4606957
++2099-06-12,129.2211,129.2996,128.7027,128.8234,4714464
++2099-06-15,128.6359,129.2026,127.4249,128.1210,4551527
++2099-06-16,128.0227,128.4287,126.3243,127.1284,5462100
++2099-06-17,127.1859,128.0984,126.4425,126.7804,5131867
++2099-06-18,126.6519,126.8844,125.7245,126.1866,4277161
++2099-06-19,126.5700,126.7655,124.6646,125.2298,5346489
++2099-06-22,124.9720,126.4576,124.4062,125.6739,4705178
++2099-06-23,126.2657,126.4212,124.4475,124.8213,5256818
++2099-06-24,124.6742,124.8393,124.0552,124.1710,5309553
++2099-06-25,124.2431,124.7859,122.2815,122.6121,4814157
++2099-06-26,122.5767,123.4757,122.1385,123.0712,4910697
++2099-06-29,123.3625,124.0405,122.4379,122.6174,4851855
++2099-06-30,126.4859,127.8815,126.2322,127.6277,4993275
+diff --git a/scanner/tests/fixtures/bars/PULR.csv b/scanner/tests/fixtures/bars/PULR.csv
+new file mode 100644
+index 0000000..79b4d29
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/PULR.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,119.8598,120.8553,119.4554,120.7040,5637828
++2099-02-26,121.0236,123.4021,120.8021,122.7156,5490671
++2099-02-27,122.9456,124.3517,122.6020,123.8786,4267066
++2099-03-02,124.0267,125.1775,123.5991,125.0640,4583342
++2099-03-03,125.1075,126.0855,124.9621,125.9698,4595022
++2099-03-04,126.0621,127.3133,125.2424,126.7159,4471382
++2099-03-05,126.7472,128.0380,126.6278,127.6571,4908433
++2099-03-06,128.1334,128.6105,127.9878,128.1653,5600702
++2099-03-09,127.9020,128.4416,127.1982,128.2316,5239551
++2099-03-10,128.0817,128.7597,127.7225,128.1915,4873301
++2099-03-11,127.9911,128.4900,127.9719,127.9873,4339218
++2099-03-12,128.1297,129.1673,128.1290,128.7163,5405026
++2099-03-13,128.4306,129.7147,127.3383,129.6618,5584196
++2099-03-16,129.5289,131.3535,129.2911,131.3223,5413548
++2099-03-17,131.3121,132.4756,131.0216,132.2533,4897833
++2099-03-18,132.3039,133.3069,132.0097,133.0400,5598445
++2099-03-19,132.6407,134.1893,132.1848,134.0921,4721278
++2099-03-20,134.4844,134.7922,134.4242,134.6946,5189522
++2099-03-23,134.5780,135.2209,133.6926,134.0192,4558262
++2099-03-24,134.2258,135.6132,133.8236,135.3471,5675519
++2099-03-25,135.3020,136.5242,134.9353,135.6474,5305778
++2099-03-26,135.5413,136.9175,135.4976,136.4195,5346725
++2099-03-27,136.4449,137.8442,136.4326,136.8545,5471574
++2099-03-30,137.2878,139.5870,137.2360,139.5147,5178651
++2099-03-31,139.6613,141.4853,139.5375,140.9681,5291582
++2099-04-01,141.1653,142.2383,141.1186,141.9106,4314735
++2099-04-02,142.2072,142.5589,141.3642,141.7303,5687770
++2099-04-03,141.2611,143.1755,141.0629,143.0238,5330881
++2099-04-06,143.2660,144.5326,142.6668,143.0175,5149704
++2099-04-07,142.5492,145.2337,141.5544,144.5210,5266894
++2099-04-08,144.4880,144.7659,143.7164,144.0526,4661794
++2099-04-09,143.9828,145.4270,143.8612,144.6446,5142642
++2099-04-10,144.4035,146.1717,144.3724,146.0004,4864542
++2099-04-13,145.9126,146.3019,145.8889,146.0247,4856763
++2099-04-14,145.7783,146.8062,145.4512,146.7758,4322424
++2099-04-15,146.8122,147.9486,146.4856,147.5715,5002174
++2099-04-16,147.5974,149.3447,147.5477,148.9678,4441631
++2099-04-17,149.2105,149.4681,148.9478,149.2768,5470704
++2099-04-20,149.3913,151.0197,148.6205,150.4970,5708522
++2099-04-21,150.4303,153.7245,150.1345,152.8054,5256149
++2099-04-22,152.8136,153.5552,152.0929,152.3309,5597474
++2099-04-23,152.1331,152.7706,152.0863,152.3544,4649844
++2099-04-24,152.2408,153.9964,151.8712,153.4219,4447625
++2099-04-27,153.4302,153.6643,153.2343,153.6076,4974448
++2099-04-28,153.4651,154.0766,152.7111,153.2431,4915949
++2099-04-29,152.9282,155.7131,152.1461,155.0878,5243942
++2099-04-30,155.4145,156.6887,155.4029,156.5801,4515077
++2099-05-01,156.7962,158.2685,156.6906,158.2047,4502027
++2099-05-04,158.5176,160.0521,157.5531,159.8277,5078083
++2099-05-05,159.8490,161.4793,159.1251,161.1712,5578024
++2099-05-06,161.0853,161.5070,160.9015,161.2317,5390681
++2099-05-07,161.5720,161.8358,159.8914,159.9919,5367066
++2099-05-08,160.1743,161.2701,160.0349,161.1566,4557008
++2099-05-11,161.2241,162.4708,160.4518,161.0074,4873371
++2099-05-12,161.1680,161.9011,160.9741,161.7998,4505455
++2099-05-13,162.0115,162.9332,161.1191,162.8837,5219095
++2099-05-14,162.4966,163.5972,161.4429,162.5786,4975954
++2099-05-15,162.6150,163.4667,162.4989,163.0547,4601925
++2099-05-18,163.2486,165.8824,162.9214,165.2944,4552317
++2099-05-19,164.8092,166.8328,163.9645,166.7305,5359248
++2099-05-20,166.7129,166.8385,165.7516,166.1029,4735482
++2099-05-21,166.3321,167.2252,165.7953,166.7071,5306156
++2099-05-22,166.9198,168.1558,166.7656,167.4909,4599861
++2099-05-25,166.9233,168.9873,166.3602,168.7760,5665131
++2099-05-26,168.0877,170.8956,167.8219,170.2227,4949474
++2099-05-27,170.5565,171.6324,170.1531,170.9620,4649344
++2099-05-28,171.3635,172.9756,170.7848,171.5511,5204074
++2099-05-29,171.0986,174.2851,170.0987,173.1324,4873694
++2099-06-01,172.8975,172.9103,172.4353,172.6503,5046986
++2099-06-02,172.3909,175.3014,171.8199,174.4842,5367485
++2099-06-03,175.1991,176.8421,175.0823,175.6026,5674604
++2099-06-04,175.1343,176.2388,174.7802,175.9615,5389831
++2099-06-05,175.9655,177.3177,175.2712,176.2436,4477759
++2099-06-08,175.7853,177.4890,175.3322,177.2709,4283062
++2099-06-09,177.5833,178.2374,176.6250,176.7318,5245606
++2099-06-10,176.2151,177.0089,174.5581,175.3886,5010424
++2099-06-11,175.3931,176.8119,175.3260,176.5362,4657553
++2099-06-12,176.8801,178.9668,176.0331,178.6793,5743964
++2099-06-15,178.4350,179.6535,177.3954,179.3489,5513509
++2099-06-16,179.7296,180.4111,178.6018,180.2054,4549713
++2099-06-17,180.4757,180.7052,178.1763,179.1982,5145325
++2099-06-18,179.2453,180.4589,176.7967,177.3068,5083003
++2099-06-19,176.9776,177.7298,176.1919,176.6989,4387640
++2099-06-22,176.5114,177.2506,175.7430,176.4673,5362018
++2099-06-23,176.5712,176.8421,175.1259,175.5124,4917524
++2099-06-24,175.2954,175.6628,174.4666,175.3550,4805355
++2099-06-25,175.5915,176.3763,173.2368,173.4425,5196102
++2099-06-26,173.3574,173.7649,172.2823,172.7019,5311122
++2099-06-29,172.8368,173.1531,170.4813,171.0603,4940399
++2099-06-30,176.7241,177.0761,174.7878,175.4919,5053100
+diff --git a/scanner/tests/fixtures/bars/QQQ.csv b/scanner/tests/fixtures/bars/QQQ.csv
+new file mode 100644
+index 0000000..c054233
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/QQQ.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,426.2824,428.2592,426.1188,428.0242,39807493
++2099-02-26,428.4691,430.1460,424.2358,425.9257,42487331
++2099-02-27,425.6800,427.6535,425.2195,427.4415,39053067
++2099-03-02,428.9307,431.2947,427.0889,428.1135,43081991
++2099-03-03,428.6148,432.7928,426.3142,431.1451,37371260
++2099-03-04,429.4952,432.2029,424.5403,426.4814,40293817
++2099-03-05,424.7228,427.1262,423.4167,425.2369,43568557
++2099-03-06,425.4950,427.6754,421.2499,422.8506,41739476
++2099-03-09,421.2980,423.8162,418.6317,419.3845,39001637
++2099-03-10,419.0761,419.7542,416.5218,416.7211,43722499
++2099-03-11,415.3019,416.2023,414.5671,415.1794,39125318
++2099-03-12,415.0142,416.9366,414.1835,414.3929,44057458
++2099-03-13,414.8763,415.2715,411.5298,411.5528,45378723
++2099-03-16,410.0279,415.7026,408.3494,413.1069,34122684
++2099-03-17,413.2613,414.4185,409.4354,411.4627,39667018
++2099-03-18,410.8857,412.7938,398.2876,401.1010,38721250
++2099-03-19,401.2773,405.2135,400.8626,405.0821,37297021
++2099-03-20,405.1801,406.5922,403.5794,403.9742,34551437
++2099-03-23,403.0725,404.8609,401.1685,401.7334,35399164
++2099-03-24,400.2753,404.4407,400.1516,402.7567,39077415
++2099-03-25,402.4537,404.0861,400.4460,403.6587,41060872
++2099-03-26,402.5328,404.1227,402.1487,403.9906,40909510
++2099-03-27,405.9978,407.1827,399.1202,401.3907,42446359
++2099-03-30,399.6355,403.0458,397.0955,402.1665,42841810
++2099-03-31,401.4560,403.9726,395.4099,397.3809,38813000
++2099-04-01,395.8750,402.6858,395.4994,402.1287,42628834
++2099-04-02,401.6788,402.7424,396.7020,398.2183,43250104
++2099-04-03,398.0436,399.7685,396.1284,397.7194,43877880
++2099-04-06,397.7671,398.5745,395.4613,397.9394,36795235
++2099-04-07,396.9782,400.2155,394.4480,398.7955,36135791
++2099-04-08,398.2990,399.0429,397.1299,398.1684,43221429
++2099-04-09,399.1157,402.0492,398.1820,399.8658,37534549
++2099-04-10,400.0892,401.9892,385.3283,388.3986,36857003
++2099-04-13,389.5301,390.3446,386.4990,387.8275,40793490
++2099-04-14,387.7676,388.9197,385.5026,387.0845,34031955
++2099-04-15,387.4338,388.0036,384.2838,385.4941,42077646
++2099-04-16,385.8103,393.5629,384.4220,389.9679,35540656
++2099-04-17,390.0718,391.5218,385.8932,386.6711,39568923
++2099-04-20,386.2761,386.8011,385.4245,386.1667,45712339
++2099-04-21,386.3185,387.6654,379.4694,379.6264,37704318
++2099-04-22,380.1085,381.9314,380.0884,380.2120,35763117
++2099-04-23,380.2686,381.6111,374.5881,375.0099,34458448
++2099-04-24,375.0930,375.6104,369.2006,370.0348,44216181
++2099-04-27,369.4656,376.8234,368.2778,376.8060,42404941
++2099-04-28,375.7274,378.8012,374.5317,378.6931,41781433
++2099-04-29,378.4560,378.6588,377.1499,378.4186,38620926
++2099-04-30,380.3650,381.5348,376.8852,378.6907,36668155
++2099-05-01,377.1927,381.1376,373.8095,374.0425,36848031
++2099-05-04,373.4423,374.2989,370.4411,370.6208,34725652
++2099-05-05,370.9627,372.1448,370.6202,371.6444,45323452
++2099-05-06,371.5998,374.1260,361.4621,365.0421,36196022
++2099-05-07,364.8062,367.6717,363.3271,365.6047,44628563
++2099-05-08,365.1767,365.8879,359.9204,360.2310,34764450
++2099-05-11,360.3099,360.4482,359.9653,360.3463,39390222
++2099-05-12,361.4135,362.1710,356.7714,356.8634,35460200
++2099-05-13,356.3870,363.3381,356.3637,361.7021,34495648
++2099-05-14,362.0966,365.4710,360.3368,364.4460,44208577
++2099-05-15,363.7633,364.1780,362.0678,362.6815,40027547
++2099-05-18,362.8087,363.1353,356.3344,356.8818,41843955
++2099-05-19,355.7904,356.0840,352.7590,354.3742,44049489
++2099-05-20,353.0367,355.8828,351.4334,353.9789,40944198
++2099-05-21,354.3393,354.8255,348.8613,350.8948,37673672
++2099-05-22,350.2058,351.5845,348.6583,351.4734,43964669
++2099-05-25,350.8698,355.1769,346.9422,354.0664,45749399
++2099-05-26,354.4394,354.8363,352.6727,353.6761,40382263
++2099-05-27,352.9453,353.6900,351.1744,352.1973,43261237
++2099-05-28,352.6679,355.5229,352.0980,354.2023,34915569
++2099-05-29,354.1207,355.7646,350.6786,353.1199,38359225
++2099-06-01,352.1924,356.3339,351.8884,355.3254,45351334
++2099-06-02,354.0576,354.2132,353.6266,354.1744,44606499
++2099-06-03,353.5592,359.7952,352.9866,358.5926,34159177
++2099-06-04,358.9879,359.7713,356.6538,357.5475,35207055
++2099-06-05,358.2860,358.8688,352.8979,354.2372,41552964
++2099-06-08,353.9555,355.2156,353.0343,354.2876,42842923
++2099-06-09,353.1334,356.7046,350.6225,352.2381,37362178
++2099-06-10,352.4031,353.3894,348.9258,349.3238,41899427
++2099-06-11,349.1937,351.0780,347.0179,348.7408,38683833
++2099-06-12,348.6439,352.3172,348.2767,350.6427,36362915
++2099-06-15,350.4668,350.5747,343.9855,344.2580,44608952
++2099-06-16,344.0445,345.9295,343.5658,343.9162,44750939
++2099-06-17,343.0892,345.6488,341.2286,343.2752,39551162
++2099-06-18,343.8479,345.1317,341.3446,342.6521,41813430
++2099-06-19,342.6088,347.4210,342.3739,344.6772,42190398
++2099-06-22,344.2811,344.7452,340.5236,340.8054,41366640
++2099-06-23,339.7934,342.5718,339.3725,342.4280,39843798
++2099-06-24,342.4259,343.8566,339.8985,341.5861,34217867
++2099-06-25,340.5477,343.2766,338.4357,341.6915,43699157
++2099-06-26,341.0309,342.4128,339.8428,340.8774,44817624
++2099-06-29,340.2999,340.5956,339.6121,339.7660,45566739
++2099-06-30,340.7762,340.9776,337.3632,338.1225,45923475
+diff --git a/scanner/tests/fixtures/bars/SHORT.csv b/scanner/tests/fixtures/bars/SHORT.csv
+new file mode 100644
+index 0000000..34773fa
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/SHORT.csv
+@@ -0,0 +1,41 @@
++date,open,high,low,close,volume
++2099-05-06,81.1383,81.4441,80.4348,80.5523,4530431
++2099-05-07,80.5176,80.6860,79.9224,80.2158,4566792
++2099-05-08,80.0759,81.1365,79.8112,81.0110,4973046
++2099-05-11,81.1581,82.0628,81.0072,81.8623,4608762
++2099-05-12,81.9250,82.4859,81.6524,82.0808,5266916
++2099-05-13,81.9758,83.1380,81.6402,82.8443,5165950
++2099-05-14,82.6824,84.1881,82.2166,83.2806,5532424
++2099-05-15,83.5202,84.8828,83.4952,84.1948,5589789
++2099-05-18,84.1571,85.6309,83.9436,85.4580,5138356
++2099-05-19,85.6719,86.4068,85.5381,86.1801,4873927
++2099-05-20,86.0315,87.6340,86.0100,87.1728,4984590
++2099-05-21,87.0921,87.6591,86.7284,87.0985,5669883
++2099-05-22,87.1224,87.7042,86.8394,86.8793,5150801
++2099-05-25,86.6947,86.9170,85.0199,85.0716,5093911
++2099-05-26,85.1837,85.8803,85.0509,85.6949,4562641
++2099-05-27,85.6069,86.1157,85.1793,85.9933,4493989
++2099-05-28,86.1393,86.7774,85.9089,86.7319,5426017
++2099-05-29,86.6925,87.3989,85.1660,85.3519,5529907
++2099-06-01,85.2111,85.6391,85.1555,85.1993,4257116
++2099-06-02,85.5162,85.5484,84.4785,84.9842,5163181
++2099-06-03,84.6893,85.0128,83.6792,83.6898,4309976
++2099-06-04,83.5964,85.0077,83.3624,84.7286,5697880
++2099-06-05,84.8363,86.1811,84.4397,86.0515,4771991
++2099-06-08,85.8579,86.2018,85.1172,85.2063,4398928
++2099-06-09,84.8549,86.1458,84.3442,85.8623,5060999
++2099-06-10,85.4581,88.2662,85.2274,87.6447,5617581
++2099-06-11,87.5476,87.5715,86.7603,86.8374,5242517
++2099-06-12,86.9645,88.1651,86.5311,87.9876,4734929
++2099-06-15,87.8421,90.4261,87.7968,89.6919,4923983
++2099-06-16,89.5126,92.1839,89.5054,91.6840,5540348
++2099-06-17,91.7518,92.0180,90.6403,90.6986,5010053
++2099-06-18,90.9363,91.2031,89.4380,90.0005,5051852
++2099-06-19,89.8631,91.1986,89.8589,90.4777,4925477
++2099-06-22,90.3514,91.9622,90.1281,91.8764,5358822
++2099-06-23,91.8127,92.0332,90.5870,90.9865,4441921
++2099-06-24,91.2030,91.3296,90.2570,90.5763,4490514
++2099-06-25,90.8084,91.2762,89.5704,89.8308,5413282
++2099-06-26,89.9302,92.0896,89.4167,91.1307,4258496
++2099-06-29,90.9641,91.2154,90.3617,90.8990,4760308
++2099-06-30,90.9453,92.2460,90.6075,91.7195,5538693
+diff --git a/scanner/tests/fixtures/bars/SPY.csv b/scanner/tests/fixtures/bars/SPY.csv
+new file mode 100644
+index 0000000..9d4532c
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/SPY.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,503.2074,504.7856,502.9495,504.1146,70190577
++2099-02-26,502.1095,511.6738,500.0818,508.7507,77760312
++2099-02-27,507.7130,511.2987,505.5632,509.2076,82587033
++2099-03-02,509.9813,513.1478,506.0874,507.1263,85003673
++2099-03-03,508.5449,510.0588,502.2174,504.0567,72501013
++2099-03-04,502.6893,508.6870,502.6362,504.4035,90232600
++2099-03-05,506.4570,506.9514,500.2193,501.5624,71109886
++2099-03-06,500.7881,501.7849,496.3325,497.4892,82228616
++2099-03-09,498.6186,499.7773,497.0049,498.3329,71987455
++2099-03-10,498.8682,502.9383,497.9712,498.9808,82587042
++2099-03-11,500.2934,500.9602,500.1548,500.8664,90303742
++2099-03-12,500.1997,501.5630,496.2955,498.3701,91720137
++2099-03-13,498.4259,499.1819,497.5583,498.6343,90709664
++2099-03-16,499.0945,500.4911,497.4583,498.6899,88716683
++2099-03-17,499.1067,499.3278,492.5803,494.4336,68513084
++2099-03-18,494.3231,498.1006,490.9909,496.2768,69319171
++2099-03-19,496.6260,498.2111,493.7825,497.4800,74352135
++2099-03-20,497.7059,505.2897,496.9164,504.8599,89603582
++2099-03-23,504.9408,506.7186,504.1656,505.7272,89490341
++2099-03-24,506.9584,509.1295,503.7989,505.5409,80685791
++2099-03-25,503.7907,510.0890,503.7370,509.5330,75923706
++2099-03-26,511.7252,513.5955,508.8662,510.3955,80993621
++2099-03-27,509.8842,517.0754,508.9946,513.4345,72417338
++2099-03-30,513.1448,513.5624,508.9996,512.5651,74085301
++2099-03-31,514.0963,516.8753,512.5571,513.4923,70289047
++2099-04-01,513.6868,519.6755,510.5891,516.9049,73951110
++2099-04-02,517.4393,520.2081,514.9526,519.3227,81820691
++2099-04-03,519.5855,520.5077,519.0781,519.9827,89361934
++2099-04-06,520.2265,522.6301,514.9168,516.8660,69523252
++2099-04-07,515.2969,518.6942,512.0256,518.5051,83559395
++2099-04-08,517.9712,519.4042,516.4201,519.0035,82803314
++2099-04-09,519.3271,524.3047,518.3837,521.5065,90230492
++2099-04-10,520.7066,522.6054,516.5020,522.4439,79191997
++2099-04-13,520.7678,527.9904,519.5290,526.1162,71012357
++2099-04-14,523.7683,526.9419,523.2275,526.2165,70338482
++2099-04-15,525.5400,530.0636,524.8167,527.1173,82397290
++2099-04-16,526.7187,533.9140,526.3914,529.4897,72011824
++2099-04-17,528.2852,529.7343,524.1004,526.3014,74711360
++2099-04-20,527.1510,528.3770,525.2175,525.2962,70843796
++2099-04-21,525.2384,527.0284,522.0549,523.9829,75278823
++2099-04-22,523.1744,531.6961,519.1150,530.4717,80104998
++2099-04-23,529.6355,531.0057,527.4002,530.4414,77582938
++2099-04-24,529.8223,533.6197,525.4443,532.7824,85689417
++2099-04-27,532.3575,535.6918,531.4822,535.0288,69152842
++2099-04-28,534.3954,535.0838,533.1121,534.3946,85920557
++2099-04-29,534.7338,537.0338,527.5629,529.6893,77700035
++2099-04-30,528.7489,538.4477,528.0315,533.0205,78747944
++2099-05-01,533.1517,535.0281,530.4817,531.9848,82792700
++2099-05-04,532.4637,534.8309,529.2291,534.5424,76331507
++2099-05-05,535.0816,537.3942,528.7774,530.6234,69665287
++2099-05-06,532.0441,532.1907,528.3782,529.4942,87709053
++2099-05-07,529.6123,536.3647,527.2935,533.7519,72068156
++2099-05-08,533.0722,541.1953,530.5500,538.6016,80729690
++2099-05-11,537.6091,538.3283,532.0019,534.6618,77674865
++2099-05-12,534.5958,536.0242,528.2900,530.6535,87392419
++2099-05-13,530.8772,535.8907,526.1238,530.7779,86258212
++2099-05-14,530.7049,535.2288,530.2955,533.3625,79837244
++2099-05-15,531.9439,534.9894,531.8371,534.1429,83622933
++2099-05-18,536.1226,538.1577,531.9240,535.3828,81885643
++2099-05-19,536.4050,538.5024,530.5542,532.4740,68582224
++2099-05-20,531.7947,535.9044,530.4970,534.6150,68331056
++2099-05-21,533.7262,541.4552,532.7699,538.4648,86629185
++2099-05-22,540.5470,542.2612,536.3675,537.3265,74693087
++2099-05-25,537.4996,538.5427,530.5744,532.9736,74551768
++2099-05-26,534.4799,536.8608,528.0642,530.8135,83923269
++2099-05-27,530.4755,534.5486,529.0982,533.5047,87926623
++2099-05-28,533.1420,534.2559,523.3009,528.2219,80936048
++2099-05-29,527.7693,530.8700,525.8712,528.1948,69797796
++2099-06-01,528.4001,531.1276,524.7108,525.3182,90566086
++2099-06-02,523.4950,528.5096,523.0632,525.1675,85621087
++2099-06-03,524.6304,527.2433,523.4594,524.6596,78823069
++2099-06-04,523.6863,525.4259,520.2368,524.9719,86350805
++2099-06-05,524.7027,530.3026,522.8563,529.9629,91610728
++2099-06-08,529.3444,533.7228,528.1261,531.5657,73482907
++2099-06-09,531.7701,536.5599,528.7876,536.0852,78715324
++2099-06-10,534.1484,536.7794,532.7555,535.8984,68909353
++2099-06-11,535.8951,537.2984,534.0821,534.6243,74339790
++2099-06-12,533.9212,539.0269,532.7449,536.1067,87342488
++2099-06-15,535.1352,535.4462,522.9590,527.2530,76564878
++2099-06-16,526.4668,528.0917,526.2268,527.3905,69738052
++2099-06-17,527.8647,528.4384,527.5113,528.1610,68708080
++2099-06-18,528.7707,532.3097,522.9994,524.5107,91454432
++2099-06-19,525.2221,527.0168,522.3970,526.2344,69283532
++2099-06-22,526.4130,527.9057,521.9346,524.7317,90005890
++2099-06-23,525.4030,527.3129,514.5840,517.2519,80663286
++2099-06-24,517.5960,518.1586,515.4035,516.8485,90306445
++2099-06-25,516.4485,516.9304,513.0560,514.0714,84514084
++2099-06-26,514.8149,515.0671,511.7600,512.7227,82609317
++2099-06-29,511.1879,513.7717,509.1600,512.5106,81150087
++2099-06-30,510.8489,516.9454,507.7126,516.6137,84096292
+diff --git a/scanner/tests/fixtures/bars/STALE.csv b/scanner/tests/fixtures/bars/STALE.csv
+new file mode 100644
+index 0000000..0f97ada
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/STALE.csv
+@@ -0,0 +1,90 @@
++date,open,high,low,close,volume
++2099-02-25,70.7474,71.0141,70.4547,70.9936,5710327
++2099-02-26,71.0263,72.0554,70.8054,71.8232,5019347
++2099-02-27,71.8222,72.2684,70.8694,70.9822,5541366
++2099-03-02,70.9478,70.9539,69.3001,69.7480,4622420
++2099-03-03,69.8491,70.0250,69.5807,69.8165,4618304
++2099-03-04,70.0275,70.5711,69.9825,70.4881,4666506
++2099-03-05,70.4015,70.7258,70.3360,70.5258,5711485
++2099-03-06,70.5431,70.7228,69.1064,69.6382,4514215
++2099-03-09,69.5059,69.6631,69.2874,69.4319,5029860
++2099-03-10,69.4922,70.6657,69.4510,70.5672,5335297
++2099-03-11,70.5622,71.1273,69.6279,69.7338,4571145
++2099-03-12,69.6859,70.9466,69.5260,70.6041,4915955
++2099-03-13,70.4895,71.5872,70.0938,71.1147,5248923
++2099-03-16,71.1005,72.0558,71.0380,71.5992,4682892
++2099-03-17,71.7707,72.4642,71.5096,72.2914,4390931
++2099-03-18,72.4532,72.7938,71.9118,72.0410,4263219
++2099-03-19,71.9411,72.4083,71.7785,72.1001,5227382
++2099-03-20,72.2566,73.7088,72.1904,73.5437,5093822
++2099-03-23,73.3356,73.6362,73.3318,73.4073,5125102
++2099-03-24,73.4335,73.9199,73.1181,73.2464,4435970
++2099-03-25,73.0943,73.1250,72.2660,72.3669,4439394
++2099-03-26,72.4245,72.4353,71.8918,72.1729,4534481
++2099-03-27,72.2513,73.2865,72.0725,72.8511,5307802
++2099-03-30,72.7388,73.9725,72.5317,73.9073,4516420
++2099-03-31,73.9364,74.9908,73.8923,74.5348,4821001
++2099-04-01,74.7661,75.4846,74.6681,75.1558,5143728
++2099-04-02,75.2906,76.0147,75.1936,75.7465,5706644
++2099-04-03,76.1396,76.3142,76.0697,76.1538,4478842
++2099-04-06,76.1453,77.0986,76.0475,77.0731,5550380
++2099-04-07,76.9248,77.4651,76.5754,77.1192,5511402
++2099-04-08,77.3195,78.3510,77.2162,78.1007,4718785
++2099-04-09,77.9084,78.6402,77.2346,78.2065,5207778
++2099-04-10,78.2073,78.3882,76.8452,77.1241,5265888
++2099-04-13,77.2088,77.2290,76.2149,76.2992,4684668
++2099-04-14,76.4438,76.6823,75.4207,76.3085,5489105
++2099-04-15,76.0947,76.3771,75.7319,76.1188,5619375
++2099-04-16,76.1634,77.0942,75.0714,75.3569,5577439
++2099-04-17,75.6663,75.7541,74.7857,74.9405,5050460
++2099-04-20,74.8109,75.3466,74.4797,75.2304,5698387
++2099-04-21,75.2786,76.3389,75.0752,75.6855,5209177
++2099-04-22,75.5732,76.6002,75.1644,76.4788,4411048
++2099-04-23,76.5498,76.9222,75.7583,75.9814,4912999
++2099-04-24,75.7337,76.6398,75.5482,76.4217,4943274
++2099-04-27,76.3682,77.4954,76.2689,77.3618,4699696
++2099-04-28,77.3366,78.1802,77.0361,77.7913,4776554
++2099-04-29,78.0118,79.7207,77.6319,79.3111,4267836
++2099-04-30,79.2575,79.3223,78.7020,79.1010,5517799
++2099-05-01,79.2780,79.4147,79.0334,79.2581,4701401
++2099-05-04,79.3888,80.0068,78.8211,79.5591,4264449
++2099-05-05,79.3625,79.6519,79.0637,79.4047,5688879
++2099-05-06,79.1838,79.6432,79.1806,79.5273,4362287
++2099-05-07,79.5317,79.9304,79.3136,79.8724,4947501
++2099-05-08,79.7801,80.4125,79.1355,80.0083,5623989
++2099-05-11,79.9790,80.0063,79.2534,79.7756,5492030
++2099-05-12,79.6810,80.1580,79.4755,79.5873,5592893
++2099-05-13,79.4184,79.8326,79.2555,79.6898,5012544
++2099-05-14,79.7521,79.9029,78.6383,78.6464,5053542
++2099-05-15,78.5861,79.0555,78.4748,78.9504,5257721
++2099-05-18,78.9520,79.1394,78.0781,78.2590,4337683
++2099-05-19,78.2281,78.9499,77.7825,78.2281,5747809
++2099-05-20,78.2214,78.3947,77.2318,77.5498,4292522
++2099-05-21,77.4286,77.8198,77.2231,77.7838,4326117
++2099-05-22,77.4893,77.6859,77.4006,77.6527,4560313
++2099-05-25,77.5327,77.8937,77.2201,77.6123,5358960
++2099-05-26,77.7564,78.5693,77.0829,77.2050,4467748
++2099-05-27,77.4328,77.6110,77.4265,77.4498,5672873
++2099-05-28,77.6754,78.9318,77.3193,78.8201,5255589
++2099-05-29,78.9952,79.6697,77.4371,77.5828,4718937
++2099-06-01,77.8331,78.7220,77.6309,78.1324,5449744
++2099-06-02,78.2368,78.7932,77.8668,78.4648,4309530
++2099-06-03,78.6297,78.6319,78.0418,78.3274,4779333
++2099-06-04,78.2600,78.4690,77.3690,77.5076,5655705
++2099-06-05,77.5686,78.8722,77.5324,78.8649,5551448
++2099-06-08,78.9513,79.4179,78.5513,79.1701,4361177
++2099-06-09,79.1481,80.6367,79.0677,80.1079,5049291
++2099-06-10,80.1391,80.3123,79.5936,79.9782,5432311
++2099-06-11,80.1318,80.1357,79.2721,79.5412,5438575
++2099-06-12,79.8043,80.9678,79.4887,80.5451,4897049
++2099-06-15,80.5767,81.4722,80.5705,81.2907,4784602
++2099-06-16,81.4317,82.0598,81.0946,81.2160,5649838
++2099-06-17,81.5615,81.5828,81.0989,81.2090,5434501
++2099-06-18,81.3468,82.1750,81.3309,81.8685,5417523
++2099-06-19,81.8684,81.8933,80.9625,81.3948,5296233
++2099-06-22,81.4943,81.7066,80.8131,80.8960,4467640
++2099-06-23,80.7938,81.0886,80.5526,81.0272,4742253
++2099-06-24,80.8869,82.0556,80.4432,81.9915,5470562
++2099-06-25,82.2109,83.2652,82.2081,82.8483,5036895
++2099-06-26,82.7003,83.6653,82.6072,83.1695,4802789
++2099-06-29,83.1189,85.0095,82.4954,84.4341,4308035
+diff --git a/scanner/tests/fixtures/bars/THIN.csv b/scanner/tests/fixtures/bars/THIN.csv
+new file mode 100644
+index 0000000..3d6e366
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/THIN.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,49.2496,49.4712,49.2370,49.3774,278075
++2099-02-26,49.4009,49.7357,49.2040,49.5912,272856
++2099-02-27,49.6501,49.8187,49.1927,49.5524,297937
++2099-03-02,49.6840,50.0707,49.1011,49.4137,298562
++2099-03-03,49.3755,50.0829,49.0649,49.9903,305421
++2099-03-04,49.8547,50.3239,49.6523,50.1233,303854
++2099-03-05,50.1481,50.4682,49.6993,50.0860,340795
++2099-03-06,50.0835,51.4535,49.8276,51.0891,300994
++2099-03-09,51.1076,51.3466,50.8483,50.9385,338807
++2099-03-10,50.9894,51.2702,50.1953,50.3970,325692
++2099-03-11,50.1937,50.2022,49.6160,49.8052,334098
++2099-03-12,49.7293,50.0140,49.5589,49.6428,285180
++2099-03-13,49.5421,50.0883,49.2521,50.0690,311024
++2099-03-16,50.1682,50.8027,49.8759,50.5958,318301
++2099-03-17,50.7534,51.3302,50.6303,51.2732,317916
++2099-03-18,51.2334,52.3559,51.1883,52.3256,336340
++2099-03-19,52.1541,53.4302,51.9085,53.3321,318754
++2099-03-20,53.2140,54.0455,53.1537,53.7948,261638
++2099-03-23,53.6592,54.7822,53.5412,54.6339,266321
++2099-03-24,54.5425,55.1459,54.4166,55.1193,282094
++2099-03-25,54.9686,55.1685,54.6015,54.9378,342866
++2099-03-26,54.9111,55.6067,54.4383,55.5256,291543
++2099-03-27,55.4613,55.7378,55.0333,55.6957,334379
++2099-03-30,55.9753,56.1221,55.5112,55.7168,344589
++2099-03-31,55.6759,57.2638,55.4454,56.9763,295192
++2099-04-01,57.0312,57.6630,56.8423,57.5618,315572
++2099-04-02,57.3753,57.6392,57.3567,57.4259,321050
++2099-04-03,57.4121,57.8877,57.1482,57.5267,331692
++2099-04-06,57.4354,59.1030,57.2638,59.0303,326678
++2099-04-07,59.1855,59.4512,58.7835,59.0329,339367
++2099-04-08,59.0295,59.9369,58.7832,59.6218,321871
++2099-04-09,59.6006,60.3497,59.5650,60.1474,341266
++2099-04-10,60.1421,60.7649,59.9667,60.6119,334525
++2099-04-13,60.6430,61.1385,60.1032,61.1269,299743
++2099-04-14,61.2047,61.8176,60.9484,60.9851,294673
++2099-04-15,61.0138,61.2719,60.6834,60.8552,311613
++2099-04-16,60.8544,60.9662,60.8425,60.9121,292898
++2099-04-17,60.7692,60.9230,60.6423,60.8471,256895
++2099-04-20,60.9071,61.5994,60.6876,61.5004,308090
++2099-04-21,61.4577,63.2195,61.4500,62.6187,259903
++2099-04-22,62.6452,62.9509,61.9378,62.2149,318607
++2099-04-23,62.1794,62.7443,61.9186,62.7186,344730
++2099-04-24,62.5132,62.6610,61.8345,62.2561,304819
++2099-04-27,62.2536,62.4894,61.7113,61.9787,274998
++2099-04-28,61.6633,62.1169,61.2813,61.9872,319361
++2099-04-29,62.0117,62.5338,61.5730,62.2135,338487
++2099-04-30,62.1037,62.3031,61.9961,62.0967,310183
++2099-05-01,62.3127,62.3996,60.2647,60.6135,319949
++2099-05-04,60.5755,61.7838,60.5047,61.6196,287787
++2099-05-05,61.6438,61.7286,61.2690,61.6079,332214
++2099-05-06,61.7093,62.0972,61.3187,61.3685,304053
++2099-05-07,61.4373,62.7067,61.1034,61.9488,310586
++2099-05-08,61.9280,61.9919,61.7224,61.7320,337746
++2099-05-11,61.6460,61.9007,60.9717,60.9961,258017
++2099-05-12,60.9175,61.5903,60.6800,61.4552,344040
++2099-05-13,61.5536,61.9966,61.1663,61.8730,267675
++2099-05-14,61.9327,62.0148,61.0925,61.5130,317410
++2099-05-15,61.3505,62.2051,61.3306,62.1933,290928
++2099-05-18,62.0964,62.8713,62.0951,62.5877,297032
++2099-05-19,62.5331,62.6840,61.4630,62.0279,272707
++2099-05-20,62.0932,63.3922,61.7727,63.2875,256071
++2099-05-21,63.3785,63.7026,63.2901,63.6211,258796
++2099-05-22,63.4738,63.5781,62.7272,63.0516,334587
++2099-05-25,62.7876,63.5473,62.6321,63.5018,260457
++2099-05-26,63.5831,64.0195,63.0900,63.7454,255753
++2099-05-27,63.7728,64.6781,63.5879,64.5356,314924
++2099-05-28,64.5266,64.7993,63.7419,63.8176,257344
++2099-05-29,63.8068,64.8784,63.3975,64.6539,282480
++2099-06-01,64.5828,65.5368,64.1877,65.4362,277731
++2099-06-02,65.6270,66.2365,65.5146,66.0641,325125
++2099-06-03,65.8718,66.8891,65.6641,66.6415,296721
++2099-06-04,66.5398,67.9005,66.3112,67.6997,306703
++2099-06-05,67.6287,68.6120,67.5436,68.3653,291473
++2099-06-08,68.3194,68.7972,68.2872,68.6283,322855
++2099-06-09,68.6920,69.0200,67.8287,68.2206,267599
++2099-06-10,68.2461,69.3978,67.8670,69.1631,259028
++2099-06-11,69.2267,70.3110,69.1494,70.0277,295408
++2099-06-12,69.8529,70.9191,69.7530,70.4172,326025
++2099-06-15,70.4049,70.7985,69.9979,70.7048,257018
++2099-06-16,70.8962,71.4441,70.7141,71.4024,295082
++2099-06-17,71.4496,71.6466,69.3125,69.7622,289682
++2099-06-18,69.7065,70.4508,69.5876,70.1635,263926
++2099-06-19,69.9786,70.1785,68.5071,68.5633,325160
++2099-06-22,68.5097,69.0341,68.1807,68.9042,308800
++2099-06-23,68.8169,69.9769,68.2046,69.8170,265233
++2099-06-24,69.6914,71.6180,69.3463,71.3346,268298
++2099-06-25,71.2457,71.6400,70.7199,71.1735,277860
++2099-06-26,71.0490,71.8157,70.7307,71.6632,340424
++2099-06-29,71.6579,72.2968,71.5674,71.7919,295656
++2099-06-30,71.8956,72.1482,70.2377,70.3526,331299
+diff --git a/scanner/tests/fixtures/bars/TWIN.csv b/scanner/tests/fixtures/bars/TWIN.csv
+new file mode 100644
+index 0000000..917b10a
+--- /dev/null
++++ b/scanner/tests/fixtures/bars/TWIN.csv
+@@ -0,0 +1,91 @@
++date,open,high,low,close,volume
++2099-02-25,90.3659,90.8360,89.5330,90.6215,6153903
++2099-02-26,90.4662,90.7145,89.9853,89.9863,6535022
++2099-02-27,90.0921,90.4009,90.0105,90.0907,7226387
++2099-03-02,90.3465,90.7869,90.0766,90.6846,7443501
++2099-03-03,90.4898,92.1668,90.4799,91.5415,7052389
++2099-03-04,91.4390,92.9374,91.3640,91.8590,5703548
++2099-03-05,91.2487,91.7770,91.0419,91.1485,6216925
++2099-03-06,91.0515,92.0967,90.7981,91.7289,6325867
++2099-03-09,91.7091,92.1152,91.6154,91.6950,7372124
++2099-03-10,91.4935,93.0518,91.3613,92.6225,7470080
++2099-03-11,92.2850,92.8370,91.1083,92.4105,6267426
++2099-03-12,92.5381,94.0194,92.2367,93.8392,5682676
++2099-03-13,94.4064,95.2808,94.2901,94.4653,6467041
++2099-03-16,94.1761,94.1843,93.5498,94.0353,5804012
++2099-03-17,94.2090,94.4246,93.3417,93.7401,6391153
++2099-03-18,93.8673,94.3376,93.6928,94.0158,6010007
++2099-03-19,93.4081,94.4193,93.2341,94.0652,7005511
++2099-03-20,94.4485,95.3062,93.9695,95.2214,5649524
++2099-03-23,94.9716,95.7844,94.9355,95.7550,6058026
++2099-03-24,95.8022,96.3363,95.6824,95.8092,5778916
++2099-03-25,95.8630,96.6539,95.8527,96.4915,7375480
++2099-03-26,96.2469,96.4560,95.8325,96.0623,7045108
++2099-03-27,96.0191,96.5752,95.9667,96.4233,5804894
++2099-03-30,96.2223,96.6232,95.6956,96.4834,6024025
++2099-03-31,96.7205,98.1833,96.0920,97.5943,5881753
++2099-04-01,97.6498,98.6372,97.0198,98.4636,6018135
++2099-04-02,98.3460,99.2023,97.8877,98.9995,6428330
++2099-04-03,98.8116,99.6943,98.6142,98.9718,7159625
++2099-04-06,98.7496,100.0169,98.5540,99.2031,7027126
++2099-04-07,99.5073,100.6953,99.4151,100.0479,7234833
++2099-04-08,100.0812,100.3005,100.0183,100.2982,7358348
++2099-04-09,100.2625,100.6216,99.5787,100.2244,7128469
++2099-04-10,100.1527,101.6251,99.7807,101.3347,5926307
++2099-04-13,101.0645,101.7196,100.7774,101.2202,5900469
++2099-04-14,101.0672,101.8935,100.1711,101.8235,6555133
++2099-04-15,101.6079,103.4329,101.5351,102.6098,5699590
++2099-04-16,102.7322,102.9896,102.2176,102.6574,6487469
++2099-04-17,102.5046,104.4997,102.2873,103.8969,6923654
++2099-04-20,104.3584,105.1042,103.9779,104.9388,6900059
++2099-04-21,104.9547,105.1399,104.7244,104.8665,6325032
++2099-04-22,104.3883,104.5863,104.1206,104.5412,5822633
++2099-04-23,104.3812,104.4847,103.9957,104.3339,5911236
++2099-04-24,104.1049,105.0007,103.6595,104.9570,6405275
++2099-04-27,104.9324,105.5072,104.1395,104.3314,5739655
++2099-04-28,104.1800,105.1679,104.0410,105.0232,5556664
++2099-04-29,104.7255,105.7544,103.8768,105.5391,6814499
++2099-04-30,105.7084,106.4429,105.3744,105.6331,5666894
++2099-05-01,105.5219,105.7749,105.2517,105.6734,7069203
++2099-05-04,105.6410,106.5516,105.5824,106.1168,7451165
++2099-05-05,105.1083,106.9170,105.0820,105.7794,7360618
++2099-05-06,106.0050,107.0007,105.8836,106.9940,6621243
++2099-05-07,106.7994,107.6834,106.2090,106.5416,7403885
++2099-05-08,107.1060,107.8381,106.5686,107.7861,7319353
++2099-05-11,108.0131,109.0402,107.6028,108.7956,6317821
++2099-05-12,108.8424,108.9392,108.6159,108.8075,6333653
++2099-05-13,108.8611,111.2307,108.7406,109.8426,6040937
++2099-05-14,110.5050,110.5896,109.4820,109.9112,7271115
++2099-05-15,109.3180,110.5683,108.9588,110.1554,7454532
++2099-05-18,110.3259,111.4483,109.8859,111.0308,6926634
++2099-05-19,111.1642,112.8434,110.9927,112.4485,6281557
++2099-05-20,112.5995,113.6370,112.5369,112.7902,6923926
++2099-05-21,112.5408,113.5019,112.2260,113.1596,5874118
++2099-05-22,113.0738,114.0062,112.4794,113.2605,6521457
++2099-05-25,113.9989,114.7180,113.4743,114.2871,6680015
++2099-05-26,114.0922,114.6378,113.4432,114.0479,6885469
++2099-05-27,113.8721,115.6617,113.5926,115.4967,6534259
++2099-05-28,115.3268,115.6837,115.1319,115.4305,5906084
++2099-05-29,115.2682,116.1931,115.0278,115.1396,5597380
++2099-06-01,115.2588,115.7336,114.7493,115.4742,6831158
++2099-06-02,115.0300,116.3071,114.8044,116.1705,7015058
++2099-06-03,116.1696,118.5359,115.1049,118.2132,6000812
++2099-06-04,118.4680,120.8513,118.2927,120.3849,5626320
++2099-06-05,120.1293,121.8210,119.0694,121.4641,6762530
++2099-06-08,121.7747,122.5452,121.4363,122.2117,6428388
++2099-06-09,122.2246,123.1655,122.0622,122.7851,6832750
++2099-06-10,121.8993,123.0942,121.5101,122.0421,6275371
++2099-06-11,122.4769,124.3240,122.2528,123.5495,6365638
++2099-06-12,123.3068,124.1575,122.6114,123.5202,6819715
++2099-06-15,123.6990,125.9823,123.0972,125.3400,6981767
++2099-06-16,125.5980,125.9298,124.9673,125.6467,6846282
++2099-06-17,125.5698,126.1341,123.6776,123.9254,5663554
++2099-06-18,123.9894,124.6903,122.0997,122.3351,7453594
++2099-06-19,122.4898,122.5052,119.4310,120.4263,7409177
++2099-06-22,120.3884,121.0196,119.8312,119.9806,7393150
++2099-06-23,120.0338,120.0601,119.5175,119.5365,7096577
++2099-06-24,119.3281,119.6227,116.8593,118.0076,6319553
++2099-06-25,117.8745,118.0852,116.3730,116.4162,6900396
++2099-06-26,116.2610,116.6459,115.5281,115.7203,5979313
++2099-06-29,115.3212,115.3672,114.3447,114.6597,7425554
++2099-06-30,119.6221,121.9064,119.3817,121.6659,7347752
+diff --git a/scanner/tests/fixtures/expected_output.json b/scanner/tests/fixtures/expected_output.json
+new file mode 100644
+index 0000000..d007b7f
+--- /dev/null
++++ b/scanner/tests/fixtures/expected_output.json
+@@ -0,0 +1,529 @@
++{
++  "spec_version": "SCANNER-V1.1",
++  "note": "SYNTHETIC fixtures. Not market data.",
++  "benchmark": "SPY",
++  "results": [
++    {
++      "symbol": "BRKC",
++      "label": "CONFIRMED_SETUP",
++      "setup": "BREAKOUT_20D",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>prior_20d_high",
++        "close>sma50",
++        "range_pos>=0.5",
++        "rvol20>=1.5"
++      ],
++      "failed": [],
++      "flags": [],
++      "reason": "all confirmation conditions met",
++      "metrics": {
++        "close": 110.0699,
++        "sma20": 107.710675,
++        "sma50": 107.621604,
++        "atr14": 1.4123468198892957,
++        "atr14_pct": 1.2831362796634644,
++        "rsi14": 63.4897276331292,
++        "rvol20": 2.199999995943303,
++        "adv20_usd": 565562641.4089301,
++        "range_pos": 0.846126859388162,
++        "rs20_pp": 3.158315289476643,
++        "ext_atr": 1.670428939107841,
++        "zone_lo": 107.00450159005534,
++        "zone_hi": 108.41684840994465,
++        "prior_20d_high": 109.6314
++      },
++      "pivot": 110.2892,
++      "invalidation": 109.6314
++    },
++    {
++      "symbol": "BRKE",
++      "label": "RESEARCH_PASS",
++      "setup": "BREAKOUT_20D",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>prior_20d_high",
++        "close>sma50",
++        "range_pos>=0.5",
++        "rvol20>=1.5"
++      ],
++      "failed": [],
++      "flags": [
++        "RSI_OVERBOUGHT_RECORDED_ONLY",
++        "EXTENDED"
++      ],
++      "reason": "extension 2.93 ATR caps tier at RESEARCH_PASS",
++      "metrics": {
++        "close": 103.1659,
++        "sma20": 99.2212,
++        "sma50": 93.17582200000001,
++        "atr14": 1.3452184871390813,
++        "atr14_pct": 1.3039371411862655,
++        "rsi14": 78.41068982605876,
++        "rvol20": 1.8999999129165503,
++        "adv20_usd": 517466173.23204005,
++        "range_pos": 0.9375267698708882,
++        "rs20_pp": 11.97383552621144,
++        "ext_atr": 2.9323861050923523,
++        "zone_lo": 98.54859075643046,
++        "zone_hi": 99.89380924356954,
++        "prior_20d_high": 102.1444
++      },
++      "pivot": 103.268,
++      "invalidation": 102.1444
++    },
++    {
++      "symbol": "BRKX",
++      "label": "WATCH",
++      "setup": "BREAKOUT_20D",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>prior_20d_high",
++        "close>sma50",
++        "range_pos>=0.5",
++        "rvol20>=1.5"
++      ],
++      "failed": [],
++      "flags": [
++        "RSI_OVERBOUGHT_RECORDED_ONLY",
++        "OVEREXTENDED"
++      ],
++      "reason": "setup present but extension 8.14 ATR > 3.0",
++      "metrics": {
++        "close": 99.6044,
++        "sma20": 89.02871,
++        "sma50": 76.789082,
++        "atr14": 1.2989982648352396,
++        "atr14_pct": 1.304157511952524,
++        "rsi14": 99.85226532234091,
++        "rvol20": 1.9999999006246487,
++        "adv20_usd": 469632107.488675,
++        "range_pos": 0.9444633152173901,
++        "rs20_pp": 30.116097693383026,
++        "ext_atr": 8.141419651042703,
++        "zone_lo": 88.37921086758239,
++        "zone_hi": 89.67820913241762,
++        "prior_20d_high": 98.1324
++      },
++      "pivot": 99.7025,
++      "invalidation": 98.1324
++    },
++    {
++      "symbol": "CHEAP",
++      "label": "REJECT",
++      "setup": null,
++      "triggered": [
++        "adv20_usd>=min_adv"
++      ],
++      "failed": [
++        "close>=min_price"
++      ],
++      "flags": [],
++      "reason": "fails liquidity screen",
++      "metrics": {
++        "close": 8.8919,
++        "sma20": 8.097005,
++        "sma50": 7.4441120000000005,
++        "atr14": 0.13808411559825967,
++        "atr14_pct": 1.5529202487461586,
++        "rsi14": 88.32497899233664,
++        "rvol20": 1.061460129196455,
++        "adv20_usd": 158400548.53006,
++        "range_pos": 0.8360735009671144,
++        "rs20_pp": 19.996475691612524,
++        "ext_atr": 5.756599856225742
++      },
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "DOWN",
++      "label": "WATCH",
++      "setup": null,
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "low_touched_zone_last3"
++      ],
++      "failed": [
++        "close>sma50",
++        "sma20>sma50",
++        "close>=zone_lo"
++      ],
++      "flags": [],
++      "reason": "no qualifying setup",
++      "metrics": {
++        "close": 148.0281,
++        "sma20": 151.05643,
++        "sma50": 158.13644200000002,
++        "atr14": 1.9966521851512606,
++        "atr14_pct": 1.3488332182546832,
++        "rsi14": 28.401030439696513,
++        "rvol20": 1.1463565514779055,
++        "adv20_usd": 757585897.0894101,
++        "range_pos": 0.18557872226676203,
++        "rs20_pp": -2.3355137013787663,
++        "ext_atr": -1.5167038217878661,
++        "zone_lo": 150.05810390742437,
++        "zone_hi": 152.05475609257564,
++        "prior_20d_high": 156.5824
++      },
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "PULC",
++      "label": "CONFIRMED_SETUP",
++      "setup": "PULLBACK_TO_SMA20",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>sma50",
++        "sma20>sma50",
++        "low_touched_zone_last3",
++        "close>=zone_lo",
++        "rs20>0",
++        "close>prev_close",
++        "range_pos>=0.5",
++        "low_t<=zone_hi",
++        "close>=sma20",
++        "rvol20>=0.8"
++      ],
++      "failed": [],
++      "flags": [],
++      "reason": "all confirmation conditions met",
++      "metrics": {
++        "close": 210.034,
++        "sma20": 208.12854000000002,
++        "sma50": 195.36873200000002,
++        "atr14": 3.5762788602038245,
++        "atr14_pct": 1.7027142558842019,
++        "rsi14": 61.803452048411316,
++        "rvol20": 1.0999999532918392,
++        "adv20_usd": 1072130156.6448749,
++        "range_pos": 0.9047586270190904,
++        "rs20_pp": 7.1750903496884515,
++        "ext_atr": 0.5328052074472117,
++        "zone_lo": 206.3404005698981,
++        "zone_hi": 209.91667943010194,
++        "prior_20d_high": 217.7215
++      },
++      "pivot": 208.12854000000002,
++      "invalidation": 206.3404005698981
++    },
++    {
++      "symbol": "PULN",
++      "label": "WATCH",
++      "setup": "PULLBACK_TO_SMA20",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>sma50",
++        "sma20>sma50",
++        "low_touched_zone_last3",
++        "close>=zone_lo"
++      ],
++      "failed": [
++        "rs20>0"
++      ],
++      "flags": [],
++      "reason": "pullback structure but relative strength not positive",
++      "metrics": {
++        "close": 127.6277,
++        "sma20": 127.119175,
++        "sma50": 121.864648,
++        "atr14": 1.8791271516609107,
++        "atr14_pct": 1.4723505568625859,
++        "rsi14": 60.84805747818445,
++        "rvol20": 0.9999999599461291,
++        "adv20_usd": 634468432.02672,
++        "range_pos": 0.8461165342872742,
++        "rs20_pp": -1.6117363140707885,
++        "ext_atr": 0.27061766392472913,
++        "zone_lo": 126.17961142416954,
++        "zone_hi": 128.05873857583046,
++        "prior_20d_high": 132.9377
++      },
++      "pivot": 127.119175,
++      "invalidation": 126.17961142416954
++    },
++    {
++      "symbol": "PULR",
++      "label": "RESEARCH_PASS",
++      "setup": "PULLBACK_TO_SMA20",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>sma50",
++        "sma20>sma50",
++        "low_touched_zone_last3",
++        "close>=zone_lo",
++        "rs20>0",
++        "close>prev_close",
++        "low_t<=zone_hi",
++        "rvol20>=0.8"
++      ],
++      "failed": [
++        "range_pos>=0.5",
++        "close>=sma20"
++      ],
++      "flags": [],
++      "reason": "setup present; confirmation incomplete",
++      "metrics": {
++        "close": 175.4919,
++        "sma20": 176.2602,
++        "sma50": 168.176846,
++        "atr14": 2.3820961071377513,
++        "atr14_pct": 1.3573823675837755,
++        "rsi14": 57.39539447778337,
++        "rvol20": 1.0000000197898322,
++        "adv20_usd": 887865375.199415,
++        "range_pos": 0.30769566927412706,
++        "rs20_pp": 2.2063063833400176,
++        "ext_atr": -0.3225310673645216,
++        "zone_lo": 175.06915194643113,
++        "zone_hi": 177.45124805356886,
++        "prior_20d_high": 180.7052
++      },
++      "pivot": 176.2602,
++      "invalidation": 175.06915194643113
++    },
++    {
++      "symbol": "QQQ",
++      "label": "WATCH",
++      "setup": null,
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "low_touched_zone_last3"
++      ],
++      "failed": [
++        "close>sma50",
++        "sma20>sma50",
++        "close>=zone_lo"
++      ],
++      "flags": [],
++      "reason": "no qualifying setup",
++      "metrics": {
++        "close": 338.1225,
++        "sma20": 346.483295,
++        "sma50": 356.502414,
++        "atr14": 4.01133215910795,
++        "atr14_pct": 1.186354696628574,
++        "rsi14": 27.64940457629565,
++        "rvol20": 1.1268130986483085,
++        "adv20_usd": 14130816336.246586,
++        "range_pos": 0.21007636122177908,
++        "rs20_pp": -2.9034266333781145,
++        "ext_atr": -2.0842938625803775,
++        "zone_lo": 344.477628920446,
++        "zone_hi": 348.488961079554,
++        "prior_20d_high": 359.7952
++      },
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "SHORT",
++      "label": "INSUFFICIENT_DATA",
++      "setup": null,
++      "triggered": [],
++      "failed": [],
++      "flags": [],
++      "reason": "only 40 completed daily bars (< 70)",
++      "metrics": {},
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "SPY",
++      "label": "BENCHMARK",
++      "setup": null,
++      "triggered": [],
++      "failed": [],
++      "flags": [],
++      "reason": "benchmark and regime reference; never a candidate",
++      "metrics": {
++        "close": 516.6137,
++        "sma20": 525.10874,
++        "sma50": 529.4611540000001,
++        "atr14": 6.049154960098591,
++        "atr14_pct": 1.170924224444414,
++        "rsi14": 37.9483721245151,
++        "rvol20": 1.0445488073517002,
++        "adv20_usd": 42216171278.86889,
++        "range_pos": 0.9640737371111735,
++        "rs20_pp": 0.0,
++        "ext_atr": -1.4043349948934953
++      },
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "STALE",
++      "label": "INSUFFICIENT_DATA",
++      "setup": null,
++      "triggered": [],
++      "failed": [],
++      "flags": [],
++      "reason": "latest bar date differs from benchmark",
++      "metrics": {},
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "THIN",
++      "label": "REJECT",
++      "setup": null,
++      "triggered": [
++        "close>=min_price"
++      ],
++      "failed": [
++        "adv20_usd>=min_adv"
++      ],
++      "flags": [],
++      "reason": "fails liquidity screen",
++      "metrics": {
++        "close": 70.3526,
++        "sma20": 69.73983,
++        "sma50": 65.470272,
++        "atr14": 1.2354892675290208,
++        "atr14_pct": 1.7561387461572435,
++        "rsi14": 60.15353246972404,
++        "rvol20": 1.1272361908896722,
++        "adv20_usd": 20516973.39584,
++        "range_pos": 0.060141324260660364,
++        "rs20_pp": 8.120198305417647,
++        "ext_atr": 0.4959735516161447
++      },
++      "pivot": null,
++      "invalidation": null
++    },
++    {
++      "symbol": "TWIN",
++      "label": "CONFIRMED_SETUP",
++      "setup": "PULLBACK_TO_SMA20",
++      "triggered": [
++        "close>=min_price",
++        "adv20_usd>=min_adv",
++        "close>sma50",
++        "sma20>sma50",
++        "low_touched_zone_last3",
++        "close>=zone_lo",
++        "rs20>0",
++        "close>prev_close",
++        "range_pos>=0.5",
++        "low_t<=zone_hi",
++        "close>=sma20",
++        "rvol20>=0.8"
++      ],
++      "failed": [],
++      "flags": [
++        "CORRELATED_WITH_PULC"
++      ],
++      "reason": "all confirmation conditions met",
++      "metrics": {
++        "close": 121.6659,
++        "sma20": 120.891555,
++        "sma50": 114.14659400000001,
++        "atr14": 2.110788919787954,
++        "atr14_pct": 1.7349059348494151,
++        "rsi14": 59.86523996789356,
++        "rvol20": 1.0999999333809891,
++        "adv20_usd": 809518555.86728,
++        "range_pos": 0.9047411573652273,
++        "rs20_pp": 6.35923641240227,
++        "ext_atr": 0.3668509876761083,
++        "zone_lo": 119.83616054010602,
++        "zone_hi": 121.94694945989397,
++        "prior_20d_high": 126.1341
++      },
++      "pivot": 120.891555,
++      "invalidation": 119.83616054010602
++    }
++  ],
++  "selection": {
++    "verdict": "CANDIDATES",
++    "shortlist": [
++      "BRKC",
++      "PULC",
++      "BRKE"
++    ],
++    "skipped_for_correlation": [
++      {
++        "symbol": "TWIN",
++        "reason": "|r|>=0.7 vs PULC"
++      }
++    ],
++    "correlation_log": [
++      {
++        "pair": [
++          "BRKC",
++          "PULC"
++        ],
++        "r": 0.47789470571336307,
++        "n": 60,
++        "first": "2099-04-08",
++        "last": "2099-06-30",
++        "method": "simple_returns_inner_join"
++      },
++      {
++        "pair": [
++          "BRKC",
++          "TWIN"
++        ],
++        "r": 0.47365880992338333,
++        "n": 60,
++        "first": "2099-04-08",
++        "last": "2099-06-30",
++        "method": "simple_returns_inner_join"
++      },
++      {
++        "pair": [
++          "PULC",
++          "TWIN"
++        ],
++        "r": 0.9778332788228744,
++        "n": 60,
++        "first": "2099-04-08",
++        "last": "2099-06-30",
++        "method": "simple_returns_inner_join"
++      },
++      {
++        "pair": [
++          "BRKC",
++          "BRKE"
++        ],
++        "r": 0.01967897084549498,
++        "n": 60,
++        "first": "2099-04-08",
++        "last": "2099-06-30",
++        "method": "simple_returns_inner_join"
++      },
++      {
++        "pair": [
++          "PULC",
++          "BRKE"
++        ],
++        "r": 0.20353303718065766,
++        "n": 60,
++        "first": "2099-04-08",
++        "last": "2099-06-30",
++        "method": "simple_returns_inner_join"
++      }
++    ]
++  },
++  "regime": {
++    "label": "MIXED",
++    "spy_above_sma50": false,
++    "qqq_above_sma50": false,
++    "watchlist_breadth_above_sma50": 0.7692307692307693,
++    "watchlist_breadth_above_sma20": 0.7142857142857143,
++    "sector_etfs_above_sma20": 0,
++    "sector_etfs_counted": 0,
++    "status": "RECORDED_ONLY"
++  }
++}
+\ No newline at end of file
+diff --git a/scanner/tests/test_scanner_rules.py b/scanner/tests/test_scanner_rules.py
+new file mode 100644
+index 0000000..23015fa
+--- /dev/null
++++ b/scanner/tests/test_scanner_rules.py
+@@ -0,0 +1,135 @@
++"""
++SCANNER-V1.1 acceptance tests for the reference implementation.
++
++Run from repository root (standard library only):
++    python3 -m unittest discover -s scanner/tests -v
++"""
++from __future__ import annotations
++
++import json
++import math
++import sys
++import unittest
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT / "reference"))
++
++import scanner_rules as sr  # noqa: E402
++import make_fixtures as mf  # noqa: E402
++
++FIX = ROOT / "tests" / "fixtures"
++
++
++def mkbar(i, o, h, l, c, v=1_000_000):
++    return sr.Bar(f"2099-01-{i + 1:02d}", o, h, l, c, v)
++
++
++class Indicators(unittest.TestCase):
++    def test_wilder_atr_seed_then_recursion(self):
++        # 16 bars, flat close 100. TR = 1 for bars 1..14, TR = 15 on bar 15.
++        bars = [mkbar(0, 100, 100.5, 99.5, 100)]
++        for i in range(1, 15):
++            bars.append(mkbar(i, 100, 100.5, 99.5, 100))
++        bars.append(mkbar(15, 100, 107.5, 92.5, 100))
++        self.assertAlmostEqual(sr.wilder_atr(bars[:15], 14), 1.0)
++        self.assertAlmostEqual(sr.wilder_atr(bars, 14), (1.0 * 13 + 15.0) / 14)
++
++    def test_atr_needs_n_plus_one_bars(self):
++        bars = [mkbar(i, 100, 101, 99, 100) for i in range(14)]
++        self.assertIsNone(sr.wilder_atr(bars, 14))
++
++    def test_rsi_extremes(self):
++        self.assertEqual(sr.wilder_rsi([float(x) for x in range(1, 30)], 14), 100.0)
++        self.assertEqual(sr.wilder_rsi([100.0] * 30, 14), 50.0)
++
++    def test_range_position_zero_span_is_none(self):
++        self.assertIsNone(sr.range_position(mkbar(0, 10, 10, 10, 10)))
++
++
++class FalsyZero(unittest.TestCase):
++    """Regression for the V1.0 bug: rs == 0.0 treated as missing."""
++
++    def test_zero_relative_strength_is_a_value(self):
++        bars = mf.load("PULC")
++        rs = sr.relative_strength(bars, bars, 20)
++        self.assertIsNotNone(rs)
++        self.assertEqual(rs, 0.0)
++
++    def test_zero_rs_fails_gate_not_data(self):
++        bars = mf.load("PULC")
++        res = sr.classify("PULC", bars, bars)  # benchmark == itself -> rs 0.0
++        self.assertEqual(res.label, sr.WATCH)
++        self.assertIn("rs20>0", res.failed)
++
++
++class Correlation(unittest.TestCase):
++    def test_join_on_dates_not_positions(self):
++        closes = mf.path(100.0, [0.0] * 90, 0.01, 4242)  # driftless walk
++        a = [sr.Bar(d, c, c * 1.005, c * 0.995, c, 1e6)
++             for d, c in zip(mf.DATES, closes)]
++        drop = {a[i].date for i in range(32, 88, 6)}  # 10 interior gaps
++        b = [x for x in a if x.date not in drop]
++        good = sr.correlation(a, b, 60, 40)
++        self.assertGreater(good["r"], 0.80)
++        # The bug class behind a suspicious near-zero value: zipping two
++        # return lists by position after one series has gaps.
++        ra = [c.close / p.close - 1 for p, c in zip(a[:-1], a[1:])][-60:]
++        rb = [c.close / p.close - 1 for p, c in zip(b[:-1], b[1:])][-60:]
++        naive = sr.pearson(ra, rb)
++        self.assertLess(naive, good["r"] - 0.3)
++
++    def test_insufficient_overlap_returns_none(self):
++        a = mf.load("SPY")
++        res = sr.correlation(a, a[-30:], 60, 55)
++        self.assertIsNone(res["r"])
++        self.assertEqual(res["method"], "simple_returns_inner_join")
++
++
++class GoldenFixtures(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.expected = json.loads((FIX / "expected_output.json").read_text())
++        cls.bars, cls.results, cls.selection = mf.evaluate(sorted(mf.INTENDED))
++        cls.by_sym = {r.symbol: r for r in cls.results}
++
++    def test_spec_version(self):
++        self.assertEqual(self.expected["spec_version"], sr.SPEC_VERSION)
++
++    def test_labels_match_designed_intent(self):
++        for sym, label in mf.INTENDED.items():
++            with self.subTest(sym=sym):
++                self.assertEqual(self.by_sym[sym].label, label, self.by_sym[sym].reason)
++
++    def test_rule_paths(self):
++        self.assertIn("rs20>0", self.by_sym["PULN"].failed)
++        self.assertIn("EXTENDED", self.by_sym["BRKE"].flags)
++        self.assertIn("OVEREXTENDED", self.by_sym["BRKX"].flags)
++        self.assertIn("close>=min_price", self.by_sym["CHEAP"].failed)
++        self.assertIn("adv20_usd>=min_adv", self.by_sym["THIN"].failed)
++
++    def test_benchmark_is_never_a_candidate(self):
++        self.assertEqual(self.by_sym["SPY"].label, sr.BENCHMARK_ONLY)
++        self.assertNotIn("SPY", self.selection["shortlist"])
++
++    def test_numbers_match_expected_file(self):
++        exp = {r["symbol"]: r for r in self.expected["results"]}
++        for sym, res in self.by_sym.items():
++            for k, v in exp[sym]["metrics"].items():
++                got = res.metrics.get(k)
++                with self.subTest(sym=sym, metric=k):
++                    if v is None:
++                        self.assertIsNone(got)
++                    else:
++                        self.assertTrue(math.isclose(got, v, rel_tol=1e-9, abs_tol=1e-9))
++            self.assertEqual(res.label, exp[sym]["label"])
++
++    def test_selection_and_correlation_dedupe(self):
++        self.assertEqual(self.selection["shortlist"], mf.INTENDED_SHORTLIST)
++        self.assertEqual(self.selection["shortlist"], self.expected["selection"]["shortlist"])
++        skipped = {s["symbol"] for s in self.selection["skipped_for_correlation"]}
++        self.assertEqual(skipped, {"TWIN"})
++
++
++if __name__ == "__main__":
++    unittest.main()
+-- 
+2.43.0
+

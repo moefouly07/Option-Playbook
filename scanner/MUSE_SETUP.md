@@ -2,24 +2,32 @@
 
 ## Connection
 
-In Meta Muse, inspect Settings > Connectors for GitHub (labels may vary). Authorize only the intended repository when possible. If the integration is unavailable, ask Muse what supported repository-reading alternatives exist. Never paste personal-access tokens, passwords, or secrets into a chat.
+In Meta Muse, inspect Settings > Connectors for GitHub (labels may vary). Authorize only this repository, read-only, when possible. Never paste personal-access tokens, passwords, or secrets into a chat.
 
 ## First read-only test
 
-Read `scanner/README.md`, `START_HERE.md` and `CURRENT_STATE.md` in `moefouly07/Option-Playbook`. Tell me which files you actually opened. Do not change any content or settings.
+```text
+Read scanner/README.md, scanner/SCANNER_V1_1_SPEC.md, START_HERE.md and CURRENT_STATE.md in moefouly07/Option-Playbook.
+Tell me which files you actually opened and the commit SHA.
+Do not change any content or settings.
+```
 
-## One-time scan
+## Acceptance before automation
 
-Perform a read-only US equity/ETF market opportunity scan with verified quotes and source timestamps. Report up to three candidates, or NO TRADE. For each: source and freshness, catalyst, price structure, bull/bear cases, trigger and invalidation, and known data gaps. Do not infer live prices from stale quotes. Do not trade or edit GitHub.
+Run the staged tests in `scanner/MUSE_ACCEPTANCE_TESTS.md` (T0-T6). The scope is the fixed 21-symbol pilot watchlist in the spec, not the whole market.
 
-## Proposed recurring schedule (not installed)
+## Schedule (not installed until T7)
 
-Weekdays at 09:00 America/New_York, excluding US market holidays. Ask Muse to create and confirm this task in its own scheduled-task UI, only after the one-time trial is accepted. Each run should produce a brief report even when there is NO TRADE.
+```text
+10:30 America/New_York, on US equity exchange trading days only
+```
+
+Not plain weekdays: exchange holidays are skipped and early-close days are handled by the calendar. A pre-market time such as 09:00 ET is not valid for V1.1 because the run needs same-day completed RTH bars. Create the task only after T0-T6 pass and the human sign-off is logged.
 
 ## Validate
 
-Check actual connected-repository access; verify a one-time run; confirm scheduled-task entry, timezone, notification setting, and logs. Do not claim automation is active from documentation alone.
+Check repository access, a one-time run, the scheduled-task entry, timezone, notification setting, and logs. Documentation alone never proves automation is active.
 
 ## Security
 
-Read-only research permission is preferred. Keep brokerage trading disabled. Do not publish private repository data or credentials.
+Read-only research permission only. Keep brokerage trading disabled. Treat this repository as publicly readable (`SECURITY.md`).

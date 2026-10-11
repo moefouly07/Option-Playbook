@@ -1,0 +1,529 @@
+{
+  "spec_version": "SCANNER-V1.1",
+  "note": "SYNTHETIC fixtures. Not market data.",
+  "benchmark": "SPY",
+  "results": [
+    {
+      "symbol": "BRKC",
+      "label": "CONFIRMED_SETUP",
+      "setup": "BREAKOUT_20D",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>prior_20d_high",
+        "close>sma50",
+        "range_pos>=0.5",
+        "rvol20>=1.5"
+      ],
+      "failed": [],
+      "flags": [],
+      "reason": "all confirmation conditions met",
+      "metrics": {
+        "close": 110.0699,
+        "sma20": 107.710675,
+        "sma50": 107.621604,
+        "atr14": 1.4123468198892957,
+        "atr14_pct": 1.2831362796634644,
+        "rsi14": 63.4897276331292,
+        "rvol20": 2.199999995943303,
+        "adv20_usd": 565562641.4089301,
+        "range_pos": 0.846126859388162,
+        "rs20_pp": 3.158315289476643,
+        "ext_atr": 1.670428939107841,
+        "zone_lo": 107.00450159005534,
+        "zone_hi": 108.41684840994465,
+        "prior_20d_high": 109.6314
+      },
+      "pivot": 110.2892,
+      "invalidation": 109.6314
+    },
+    {
+      "symbol": "BRKE",
+      "label": "RESEARCH_PASS",
+      "setup": "BREAKOUT_20D",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>prior_20d_high",
+        "close>sma50",
+        "range_pos>=0.5",
+        "rvol20>=1.5"
+      ],
+      "failed": [],
+      "flags": [
+        "RSI_OVERBOUGHT_RECORDED_ONLY",
+        "EXTENDED"
+      ],
+      "reason": "extension 2.93 ATR caps tier at RESEARCH_PASS",
+      "metrics": {
+        "close": 103.1659,
+        "sma20": 99.2212,
+        "sma50": 93.17582200000001,
+        "atr14": 1.3452184871390813,
+        "atr14_pct": 1.3039371411862655,
+        "rsi14": 78.41068982605876,
+        "rvol20": 1.8999999129165503,
+        "adv20_usd": 517466173.23204005,
+        "range_pos": 0.9375267698708882,
+        "rs20_pp": 11.97383552621144,
+        "ext_atr": 2.9323861050923523,
+        "zone_lo": 98.54859075643046,
+        "zone_hi": 99.89380924356954,
+        "prior_20d_high": 102.1444
+      },
+      "pivot": 103.268,
+      "invalidation": 102.1444
+    },
+    {
+      "symbol": "BRKX",
+      "label": "WATCH",
+      "setup": "BREAKOUT_20D",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>prior_20d_high",
+        "close>sma50",
+        "range_pos>=0.5",
+        "rvol20>=1.5"
+      ],
+      "failed": [],
+      "flags": [
+        "RSI_OVERBOUGHT_RECORDED_ONLY",
+        "OVEREXTENDED"
+      ],
+      "reason": "setup present but extension 8.14 ATR > 3.0",
+      "metrics": {
+        "close": 99.6044,
+        "sma20": 89.02871,
+        "sma50": 76.789082,
+        "atr14": 1.2989982648352396,
+        "atr14_pct": 1.304157511952524,
+        "rsi14": 99.85226532234091,
+        "rvol20": 1.9999999006246487,
+        "adv20_usd": 469632107.488675,
+        "range_pos": 0.9444633152173901,
+        "rs20_pp": 30.116097693383026,
+        "ext_atr": 8.141419651042703,
+        "zone_lo": 88.37921086758239,
+        "zone_hi": 89.67820913241762,
+        "prior_20d_high": 98.1324
+      },
+      "pivot": 99.7025,
+      "invalidation": 98.1324
+    },
+    {
+      "symbol": "CHEAP",
+      "label": "REJECT",
+      "setup": null,
+      "triggered": [
+        "adv20_usd>=min_adv"
+      ],
+      "failed": [
+        "close>=min_price"
+      ],
+      "flags": [],
+      "reason": "fails liquidity screen",
+      "metrics": {
+        "close": 8.8919,
+        "sma20": 8.097005,
+        "sma50": 7.4441120000000005,
+        "atr14": 0.13808411559825967,
+        "atr14_pct": 1.5529202487461586,
+        "rsi14": 88.32497899233664,
+        "rvol20": 1.061460129196455,
+        "adv20_usd": 158400548.53006,
+        "range_pos": 0.8360735009671144,
+        "rs20_pp": 19.996475691612524,
+        "ext_atr": 5.756599856225742
+      },
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "DOWN",
+      "label": "WATCH",
+      "setup": null,
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "low_touched_zone_last3"
+      ],
+      "failed": [
+        "close>sma50",
+        "sma20>sma50",
+        "close>=zone_lo"
+      ],
+      "flags": [],
+      "reason": "no qualifying setup",
+      "metrics": {
+        "close": 148.0281,
+        "sma20": 151.05643,
+        "sma50": 158.13644200000002,
+        "atr14": 1.9966521851512606,
+        "atr14_pct": 1.3488332182546832,
+        "rsi14": 28.401030439696513,
+        "rvol20": 1.1463565514779055,
+        "adv20_usd": 757585897.0894101,
+        "range_pos": 0.18557872226676203,
+        "rs20_pp": -2.3355137013787663,
+        "ext_atr": -1.5167038217878661,
+        "zone_lo": 150.05810390742437,
+        "zone_hi": 152.05475609257564,
+        "prior_20d_high": 156.5824
+      },
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "PULC",
+      "label": "CONFIRMED_SETUP",
+      "setup": "PULLBACK_TO_SMA20",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>sma50",
+        "sma20>sma50",
+        "low_touched_zone_last3",
+        "close>=zone_lo",
+        "rs20>0",
+        "close>prev_close",
+        "range_pos>=0.5",
+        "low_t<=zone_hi",
+        "close>=sma20",
+        "rvol20>=0.8"
+      ],
+      "failed": [],
+      "flags": [],
+      "reason": "all confirmation conditions met",
+      "metrics": {
+        "close": 210.034,
+        "sma20": 208.12854000000002,
+        "sma50": 195.36873200000002,
+        "atr14": 3.5762788602038245,
+        "atr14_pct": 1.7027142558842019,
+        "rsi14": 61.803452048411316,
+        "rvol20": 1.0999999532918392,
+        "adv20_usd": 1072130156.6448749,
+        "range_pos": 0.9047586270190904,
+        "rs20_pp": 7.1750903496884515,
+        "ext_atr": 0.5328052074472117,
+        "zone_lo": 206.3404005698981,
+        "zone_hi": 209.91667943010194,
+        "prior_20d_high": 217.7215
+      },
+      "pivot": 208.12854000000002,
+      "invalidation": 206.3404005698981
+    },
+    {
+      "symbol": "PULN",
+      "label": "WATCH",
+      "setup": "PULLBACK_TO_SMA20",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>sma50",
+        "sma20>sma50",
+        "low_touched_zone_last3",
+        "close>=zone_lo"
+      ],
+      "failed": [
+        "rs20>0"
+      ],
+      "flags": [],
+      "reason": "pullback structure but relative strength not positive",
+      "metrics": {
+        "close": 127.6277,
+        "sma20": 127.119175,
+        "sma50": 121.864648,
+        "atr14": 1.8791271516609107,
+        "atr14_pct": 1.4723505568625859,
+        "rsi14": 60.84805747818445,
+        "rvol20": 0.9999999599461291,
+        "adv20_usd": 634468432.02672,
+        "range_pos": 0.8461165342872742,
+        "rs20_pp": -1.6117363140707885,
+        "ext_atr": 0.27061766392472913,
+        "zone_lo": 126.17961142416954,
+        "zone_hi": 128.05873857583046,
+        "prior_20d_high": 132.9377
+      },
+      "pivot": 127.119175,
+      "invalidation": 126.17961142416954
+    },
+    {
+      "symbol": "PULR",
+      "label": "RESEARCH_PASS",
+      "setup": "PULLBACK_TO_SMA20",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>sma50",
+        "sma20>sma50",
+        "low_touched_zone_last3",
+        "close>=zone_lo",
+        "rs20>0",
+        "close>prev_close",
+        "low_t<=zone_hi",
+        "rvol20>=0.8"
+      ],
+      "failed": [
+        "range_pos>=0.5",
+        "close>=sma20"
+      ],
+      "flags": [],
+      "reason": "setup present; confirmation incomplete",
+      "metrics": {
+        "close": 175.4919,
+        "sma20": 176.2602,
+        "sma50": 168.176846,
+        "atr14": 2.3820961071377513,
+        "atr14_pct": 1.3573823675837755,
+        "rsi14": 57.39539447778337,
+        "rvol20": 1.0000000197898322,
+        "adv20_usd": 887865375.199415,
+        "range_pos": 0.30769566927412706,
+        "rs20_pp": 2.2063063833400176,
+        "ext_atr": -0.3225310673645216,
+        "zone_lo": 175.06915194643113,
+        "zone_hi": 177.45124805356886,
+        "prior_20d_high": 180.7052
+      },
+      "pivot": 176.2602,
+      "invalidation": 175.06915194643113
+    },
+    {
+      "symbol": "QQQ",
+      "label": "WATCH",
+      "setup": null,
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "low_touched_zone_last3"
+      ],
+      "failed": [
+        "close>sma50",
+        "sma20>sma50",
+        "close>=zone_lo"
+      ],
+      "flags": [],
+      "reason": "no qualifying setup",
+      "metrics": {
+        "close": 338.1225,
+        "sma20": 346.483295,
+        "sma50": 356.502414,
+        "atr14": 4.01133215910795,
+        "atr14_pct": 1.186354696628574,
+        "rsi14": 27.64940457629565,
+        "rvol20": 1.1268130986483085,
+        "adv20_usd": 14130816336.246586,
+        "range_pos": 0.21007636122177908,
+        "rs20_pp": -2.9034266333781145,
+        "ext_atr": -2.0842938625803775,
+        "zone_lo": 344.477628920446,
+        "zone_hi": 348.488961079554,
+        "prior_20d_high": 359.7952
+      },
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "SHORT",
+      "label": "INSUFFICIENT_DATA",
+      "setup": null,
+      "triggered": [],
+      "failed": [],
+      "flags": [],
+      "reason": "only 40 completed daily bars (< 70)",
+      "metrics": {},
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "SPY",
+      "label": "BENCHMARK",
+      "setup": null,
+      "triggered": [],
+      "failed": [],
+      "flags": [],
+      "reason": "benchmark and regime reference; never a candidate",
+      "metrics": {
+        "close": 516.6137,
+        "sma20": 525.10874,
+        "sma50": 529.4611540000001,
+        "atr14": 6.049154960098591,
+        "atr14_pct": 1.170924224444414,
+        "rsi14": 37.9483721245151,
+        "rvol20": 1.0445488073517002,
+        "adv20_usd": 42216171278.86889,
+        "range_pos": 0.9640737371111735,
+        "rs20_pp": 0.0,
+        "ext_atr": -1.4043349948934953
+      },
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "STALE",
+      "label": "INSUFFICIENT_DATA",
+      "setup": null,
+      "triggered": [],
+      "failed": [],
+      "flags": [],
+      "reason": "latest bar date differs from benchmark",
+      "metrics": {},
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "THIN",
+      "label": "REJECT",
+      "setup": null,
+      "triggered": [
+        "close>=min_price"
+      ],
+      "failed": [
+        "adv20_usd>=min_adv"
+      ],
+      "flags": [],
+      "reason": "fails liquidity screen",
+      "metrics": {
+        "close": 70.3526,
+        "sma20": 69.73983,
+        "sma50": 65.470272,
+        "atr14": 1.2354892675290208,
+        "atr14_pct": 1.7561387461572435,
+        "rsi14": 60.15353246972404,
+        "rvol20": 1.1272361908896722,
+        "adv20_usd": 20516973.39584,
+        "range_pos": 0.060141324260660364,
+        "rs20_pp": 8.120198305417647,
+        "ext_atr": 0.4959735516161447
+      },
+      "pivot": null,
+      "invalidation": null
+    },
+    {
+      "symbol": "TWIN",
+      "label": "CONFIRMED_SETUP",
+      "setup": "PULLBACK_TO_SMA20",
+      "triggered": [
+        "close>=min_price",
+        "adv20_usd>=min_adv",
+        "close>sma50",
+        "sma20>sma50",
+        "low_touched_zone_last3",
+        "close>=zone_lo",
+        "rs20>0",
+        "close>prev_close",
+        "range_pos>=0.5",
+        "low_t<=zone_hi",
+        "close>=sma20",
+        "rvol20>=0.8"
+      ],
+      "failed": [],
+      "flags": [
+        "CORRELATED_WITH_PULC"
+      ],
+      "reason": "all confirmation conditions met",
+      "metrics": {
+        "close": 121.6659,
+        "sma20": 120.891555,
+        "sma50": 114.14659400000001,
+        "atr14": 2.110788919787954,
+        "atr14_pct": 1.7349059348494151,
+        "rsi14": 59.86523996789356,
+        "rvol20": 1.0999999333809891,
+        "adv20_usd": 809518555.86728,
+        "range_pos": 0.9047411573652273,
+        "rs20_pp": 6.35923641240227,
+        "ext_atr": 0.3668509876761083,
+        "zone_lo": 119.83616054010602,
+        "zone_hi": 121.94694945989397,
+        "prior_20d_high": 126.1341
+      },
+      "pivot": 120.891555,
+      "invalidation": 119.83616054010602
+    }
+  ],
+  "selection": {
+    "verdict": "CANDIDATES",
+    "shortlist": [
+      "BRKC",
+      "PULC",
+      "BRKE"
+    ],
+    "skipped_for_correlation": [
+      {
+        "symbol": "TWIN",
+        "reason": "|r|>=0.7 vs PULC"
+      }
+    ],
+    "correlation_log": [
+      {
+        "pair": [
+          "BRKC",
+          "PULC"
+        ],
+        "r": 0.47789470571336307,
+        "n": 60,
+        "first": "2099-04-08",
+        "last": "2099-06-30",
+        "method": "simple_returns_inner_join"
+      },
+      {
+        "pair": [
+          "BRKC",
+          "TWIN"
+        ],
+        "r": 0.47365880992338333,
+        "n": 60,
+        "first": "2099-04-08",
+        "last": "2099-06-30",
+        "method": "simple_returns_inner_join"
+      },
+      {
+        "pair": [
+          "PULC",
+          "TWIN"
+        ],
+        "r": 0.9778332788228744,
+        "n": 60,
+        "first": "2099-04-08",
+        "last": "2099-06-30",
+        "method": "simple_returns_inner_join"
+      },
+      {
+        "pair": [
+          "BRKC",
+          "BRKE"
+        ],
+        "r": 0.01967897084549498,
+        "n": 60,
+        "first": "2099-04-08",
+        "last": "2099-06-30",
+        "method": "simple_returns_inner_join"
+      },
+      {
+        "pair": [
+          "PULC",
+          "BRKE"
+        ],
+        "r": 0.20353303718065766,
+        "n": 60,
+        "first": "2099-04-08",
+        "last": "2099-06-30",
+        "method": "simple_returns_inner_join"
+      }
+    ]
+  },
+  "regime": {
+    "label": "MIXED",
+    "spy_above_sma50": false,
+    "qqq_above_sma50": false,
+    "watchlist_breadth_above_sma50": 0.7692307692307693,
+    "watchlist_breadth_above_sma20": 0.7142857142857143,
+    "sector_etfs_above_sma20": 0,
+    "sector_etfs_counted": 0,
+    "status": "RECORDED_ONLY"
+  }
+}

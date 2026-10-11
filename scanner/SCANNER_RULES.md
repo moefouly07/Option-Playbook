@@ -1,17 +1,23 @@
-# Scanner Pilot Rules
+# Scanner Rules — Plain-Language Summary
 
-Status: research draft, not a proven trading strategy.
+This page summarizes `SCANNER_V1_1_SPEC.md`. If anything here disagrees with the spec or `reference/scanner_rules.py`, the spec and the reference implementation win.
 
-Universe: listed US stocks and liquid ETFs. Equity screen based on price, dollar volume, and clean data quality, with numeric cutoffs to be selected and tested using known vendor capabilities. Never silently reject candidates using invented data.
+Status: research draft. Not a proven trading strategy. No execution.
 
-Stages:
-1. Determine market session, holiday calendar, broad ETF and sector environment.
-2. Identify unusual *verified* volume, relative-strength movement, breakouts/pullbacks, relevant catalysts.
-3. Examine daily and 5m completed bars where available; confirm technical structure and one primary decision level.
-4. Independently challenge the bull thesis with the strongest bear interpretation.
-5. If listed options matter, verify specific expiry, strike, bid, ask, volume, open interest, IV and Greeks when available. A missing live options feed means OPTIONS NOT VERIFIED.
-6. Label each candidate PASS / WATCH / REJECT / INSUFFICIENT DATA. Return at most three PASS candidates. NO TRADE is permitted.
+Universe: 21 fixed liquid symbols. SPY is the benchmark and is never a candidate.
 
-Required fields: ticker; scan time ET; regular/premarket/after-hours state; data source/feed; quote freshness; setup; catalyst with evidence; trigger; invalidation; risk and missing data.
+Liquidity: close at least 10 dollars and 20-day average dollar volume at least 50 million, else REJECT. Missing data is INSUFFICIENT_DATA, never a negative signal.
 
-No arbitrary probability/score, no backtested edge claim, no trading/execution, no edits to frozen strategy.
+Setups on the latest completed daily bar:
+
+- Breakout: close above the prior 20-day high and above SMA50. Confirmed when the close is in the upper half of the day's range on at least 1.5x volume.
+- Pullback: uptrend (close and SMA20 above SMA50), a low that reached the SMA20 zone (plus or minus 0.5 ATR14) in the last three sessions, and positive 20-day relative strength versus SPY. Confirmed by an up close, upper-half range position, today's low inside the zone, close back at or above SMA20, and at least 0.8x volume.
+- Extension: more than 2 ATR above SMA20 caps the label at RESEARCH_PASS; more than 3 ATR blocks it to WATCH.
+
+Selection: at most three, ranked by a fixed convention, skipping any name with absolute 60-day return correlation of 0.70 or more with a name already selected. Empty list means NO_CANDIDATES.
+
+Recorded only, never decisive in V1.1: regime, catalysts, RSI, earnings proximity, intraday status.
+
+Labels: CONFIRMED_SETUP, RESEARCH_PASS, WATCH, REJECT, INSUFFICIENT_DATA, BENCHMARK.
+
+No arbitrary probabilities or scores, no edge claims, no trading, no edits to the frozen strategy.

@@ -1,3 +1,7 @@
+> **SUPERSEDED on 2026-10-10 by `SCANNER_V1_1_SPEC.md` (SCANNER-V1.1).**
+> Kept unchanged below for history and audit. Do not run this version.
+> Its labels (PASS/WATCH/REJECT/INSUFFICIENT DATA) are replaced by the V1.1 enum.
+
 # Muse Scanner V1 — Pilot Specification
 
 Status: DESIGN / NOT VALIDATED / NO AUTO-EXECUTION

@@ -1,31 +1,51 @@
-# Muse Market Scanner — Pilot
+# Muse Market Scanner
 
-Status: DESIGN / NOT DEPLOYED
+```text
+Current version: SCANNER-V1.1
+Status:          PRE-REGISTERED / NOT VALIDATED / NOT SCHEDULED
+Scope:           fixed 21-symbol pilot watchlist, research only
+Execution:       none. No orders, ever.
+```
 
-This directory defines an independent research and discovery workflow for Muse. It does not modify, replace, or validate frozen CIM-V1.0 rules.
+This directory defines an independent discovery workflow for Muse. It does not modify, replace, or validate frozen CIM-V1.0.
 
-## Objective
+## Files
 
-Find up to three liquid US equity/ETF opportunities for further investigation. A scan can return NO TRADE. Research does not authorize orders.
+```text
+SCANNER_V1_1_SPEC.md       canonical rules (read this first)
+reference/scanner_rules.py executable definition of the rules (stdlib only)
+reference/make_fixtures.py how the synthetic golden fixtures were built
+tests/                     unit tests + golden fixtures (synthetic, year 2099)
+OUTPUT_SCHEMA.json         required shape of every run report
+MUSE_ACCEPTANCE_TESTS.md   T0-T7 gate before any scheduling
+ACCEPTANCE_LOG.md          result of every acceptance attempt
+MUSE_SETUP.md              connecting Muse (beginner)
+MUSE_RUNBOOK.md            operating procedure
+SCANNER_RULES.md           one-page plain-language summary
+SCANNER_V1_SPEC.md         SUPERSEDED V1.0 spec, kept for history
+```
 
-## Getting started
+## Labels
 
-1. Connect Muse to GitHub using only the repository permissions required.
-2. Ask Muse to read this file and MUSE_SETUP.md.
-3. Run a one-time read-only demonstration scan and validate timestamps, sources, and candidate logic.
-4. Only after checking results, create a daily recurring research task and confirm its schedule in Muse.
-5. Never enable brokerage order placement or repository writes as part of scanner research.
+```text
+CONFIRMED_SETUP | RESEARCH_PASS | WATCH | REJECT | INSUFFICIENT_DATA | BENCHMARK
+```
 
-## Research flow
+`TRADE_READY` is not a scanner label. No scanner output authorizes a trade.
 
-deterministic market filter -> catalysts and market regime -> technical structure -> bear-case challenge -> options quality if data available -> shortlist.
+## Run the tests
 
-## Source integrity
+```bash
+python3 -m unittest discover -s scanner/tests -v
+```
 
-For each candidate log ticker, retrieval time ET, session, feed/vendor, delayed/live/unknown quote status, evidence links, technical trigger and invalidation, option liquidity if supported, and missing data.
+## Gates
 
-Do not manufacture IV, Greeks, volume, spreads, probabilities, or historical performance. Do not claim a scanner edge before prospective evaluation.
+1. The reference tests pass.
+2. Muse passes T0-T6 in `MUSE_ACCEPTANCE_TESTS.md`.
+3. A human sign-off is recorded in `DECISION_LOG.md`.
+4. Only then is a recurring task created (T7).
 
-## Separation
+## Integrity
 
-The existing CIM-V1.0 strategy remains frozen. This directory is experimental discovery only.
+Every rule in V1.1 was written after seeing V1.0 pilot output (`DECISION_LOG.md` D-009). The 2026-10-09 data is in-sample. No scanner edge is claimed. Options are `OPTIONS_NOT_VERIFIED` until a licensed option-chain feed passes its own acceptance test.
