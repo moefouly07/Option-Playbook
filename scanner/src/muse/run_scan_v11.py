@@ -1,5 +1,6 @@
 # Canonical repository copy. Base: Muse T1c export (run_scan_v11.py, sha256 7016fa88ed7a4004...),
-# decoded byte-exact and reviewed. Review fixes applied per DECISION_LOG D-021.
+# decoded byte-exact and reviewed. Review fixes applied per DECISION_LOG D-021;
+# shared gates, outcome module, KI-001/002/003 and scan_time_price per D-022.
 """SCANNER-V1.1 single entry point (Muse workspace copy).
 
 Usage (from the repository root):
@@ -18,6 +19,9 @@ Behaviour (refusals happen before any market data is fetched):
 - The run REFUSES if any tracked file under scanner/ has uncommitted
   changes, or if the implementation manifest (D-019) differs from
   --accepted-impl-ref.
+- A LIVE run REFUSES on a non-trading day (KI-002).
+- In LIVE runs every symbol gets scan_time_price: the close of the last
+  complete SIP 5-minute bar ending at or before scan time - 20 min.
 - After fetching, the run REFUSES if SPY's latest completed bar is not the
   expected session (stale or missing vendor data, or an unmodeled market
   closure). Other symbols with stale or malformed bars become
@@ -39,12 +43,8 @@ Behaviour (refusals happen before any market data is fetched):
 from __future__ import annotations
 
 import argparse
-import csv
-import hashlib
-import importlib.util
 import json
 import re
-import subprocess
 import sys
 from datetime import date, datetime, time
 from pathlib import Path
@@ -54,6 +54,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import data_adapter as adapter  # noqa: E402
+import outcome_tools as outcomes  # noqa: E402
+import pipeline_gates as gates  # noqa: E402
 import scanner_v11 as v11  # noqa: E402
 
 ET = adapter.ET
@@ -64,86 +66,12 @@ UNIVERSE = ["SPY", "QQQ", "IWM", "SMH", "XLK", "XLF", "XLE", "XLI",
             "AMD", "MU", "AVGO", "MRVL", "PLTR", "QCOM"]
 UNIVERSE_SOURCE = "fixed pilot watchlist (scanner/SCANNER_V1_1_SPEC.md)"
 
-EXECUTED_FILES = [
-    "scanner/src/muse/run_scan_v11.py",
-    "scanner/src/muse/data_adapter.py",
-    "scanner/src/muse/scanner_v11.py",
-    "scanner/tools/implementation_ref.py",
-]
-
-SPEC_FILES = ["scanner/SCANNER_V1_1_SPEC.md", "scanner/OUTPUT_SCHEMA.json"]
-
 CALENDAR_SOURCE = ("NYSE rule-based calendar (data_adapter.py): holidays "
                    "and 13:00 early closes; ad-hoc closures not modeled")
 
 
 class Refusal(RuntimeError):
     """The run must not proceed; nothing was fetched or written."""
-
-
-# ------------------------------------------------------------ spec SHA gate
-
-
-def spec_commit_sha(repo_root: Path) -> Optional[str]:
-    if not (repo_root / "scanner" / "SCANNER_V1_1_SPEC.md").is_file():
-        return None
-    try:
-        proc = subprocess.run(
-            ["git", "-C", str(repo_root), "log", "-1", "--format=%H", "--",
-             *SPEC_FILES],
-            capture_output=True, text=True, timeout=30)
-    except Exception:
-        return None
-    if proc.returncode != 0:
-        return None
-    sha = proc.stdout.strip().lower()
-    return sha if re.fullmatch(r"[0-9a-f]{40}", sha) else None
-
-
-def uncommitted_scanner_changes(repo_root: Path) -> Optional[List[str]]:
-    """Tracked files under scanner/ with uncommitted changes (None = unknown)."""
-    try:
-        proc = subprocess.run(
-            ["git", "-C", str(repo_root), "status", "--porcelain",
-             "--untracked-files=no", "--", "scanner"],
-            capture_output=True, text=True, timeout=30)
-    except Exception:
-        return None
-    if proc.returncode != 0:
-        return None
-    return [ln for ln in proc.stdout.splitlines() if ln.strip()]
-
-
-def sha_accepted(actual: str, accepted: str) -> bool:
-    accepted = accepted.strip().lower()
-    if len(accepted) < 7 or not re.fullmatch(r"[0-9a-f]+", accepted):
-        return False
-    return actual == accepted or actual.startswith(accepted)
-
-
-# ------------------------------------------------------- implementation_ref
-
-
-def _load_impl_ref_tool(repo_root: Path):
-    path = repo_root / "scanner" / "tools" / "implementation_ref.py"
-    spec = importlib.util.spec_from_file_location("implementation_ref", path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def implementation_manifest(repo_root: Path):
-    """(implementation_files, implementation_ref) per D-019."""
-    tool = _load_impl_ref_tool(repo_root)
-    entries, lines = [], []
-    for rel in EXECUTED_FILES:
-        h = tool.file_sha256(repo_root / rel)
-        entries.append({"path": rel, "sha256": h})
-        lines.append(f"{rel}  {h}\n")
-    lines.sort()
-    entries.sort(key=lambda e: e["path"])
-    ref = "sha256:" + hashlib.sha256("".join(lines).encode("utf-8")).hexdigest()
-    return entries, ref
 
 
 # --------------------------------------------------------- schema validation
@@ -247,7 +175,7 @@ def intraday_status(last_close: Optional[float],
 
 def assemble_report(run_type: str, as_of: date, latest_completed: date,
                     now_et: datetime, bars_by_symbol: Dict[str, List[dict]],
-                    impl_files: list, impl_ref: str) -> dict:
+                    impl_files: list, impl_ref: str, spec_sha: str) -> dict:
     bench = bars_by_symbol.get("SPY", [])
     results_objs = [v11.classify(sym, bars_by_symbol.get(sym, []), bench)
                     for sym in UNIVERSE]
@@ -265,6 +193,8 @@ def assemble_report(run_type: str, as_of: date, latest_completed: date,
             "event_risk": False,
         }
         entry["intraday_status"] = None
+        entry["scan_time_price"] = None
+        entry["scan_time_bar_et"] = None
         entry["catalysts"] = []
         results.append(entry)
 
@@ -284,7 +214,7 @@ def assemble_report(run_type: str, as_of: date, latest_completed: date,
                 f"(< {int(v11.PARAMS['min_daily_bars'])})")
 
     audit_notes = [
-        f"spec_commit_sha={spec_commit_sha(REPO_ROOT)}",
+        f"spec_commit_sha={spec_sha}",
         "rules imported only from scanner_v11.py (SCANNER-V1.1); data "
         "only via data_adapter.py (read-only alpaca-market-data skill CLI)",
         "regime, RSI flag, catalysts, earnings proximity, intraday "
@@ -310,7 +240,7 @@ def assemble_report(run_type: str, as_of: date, latest_completed: date,
 
     return {
         "spec_version": v11.SPEC_VERSION,
-        "spec_commit_sha": spec_commit_sha(REPO_ROOT),
+        "spec_commit_sha": spec_sha,
         "implementation_ref": impl_ref,
         "implementation_files": impl_files,
         "run_type": run_type,
@@ -347,50 +277,39 @@ def assemble_report(run_type: str, as_of: date, latest_completed: date,
     }
 
 
-OUTCOME_HEADER = ["run_type", "scan_started_at_et",
-                  "latest_completed_daily_bar_date", "symbol", "label",
-                  "setup", "pivot", "invalidation", "reference_close",
-                  "close_p1", "close_p5", "close_p10",
-                  "invalidation_hit_first"]
-
-
-def outcome_rows_to_write(path: Path, report: dict) -> List[list]:
-    """Rows for this run, minus any (session, symbol) already logged.
-
-    One row per symbol per completed session: a repeated run on the same
-    session (e.g. the T4b repeatability check) appends nothing.
-    """
-    seen = set()
-    if path.is_file():
-        with open(path, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                seen.add((row["latest_completed_daily_bar_date"], row["symbol"]))
-    rows = []
-    for r in report["results"]:
-        key = (report["latest_completed_daily_bar_date"], r["symbol"])
-        if key in seen:
-            continue
-        rows.append([report["run_type"], report["scan_started_at_et"],
-                     report["latest_completed_daily_bar_date"], r["symbol"],
-                     r["label"], r["setup"], r["pivot"], r["invalidation"],
-                     r["metrics"].get("close"), "", "", "", ""])
-    return rows
-
-
-def append_outcome_log(path: Path, rows: List[list]) -> int:
-    """Append outcome-log rows (spec section 11); create the file if needed."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    new_file = not path.is_file()
-    with open(path, "a", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        if new_file:
-            w.writerow(OUTCOME_HEADER)
-        for row in rows:
-            w.writerow(row)
-    return len(rows)
-
-
 # --------------------------------------------------------------------- main
+
+
+def _scan_time_prices(report: dict, session, now_et: datetime) -> Optional[str]:
+    """Fill scan_time_price for every symbol and intraday_status for the
+    shortlist from the same complete SIP 5-minute bars (recorded only).
+    Returns the latest bar start used (ET), or None."""
+    shortlist = set(report["selection"]["shortlist"])
+    latest: Optional[str] = None
+    missing = []
+    for entry in report["results"]:
+        sym = entry["symbol"]
+        try:
+            bars5 = adapter.fetch_intraday_5m(sym, session, now_et)
+        except adapter.AdapterError:
+            bars5 = []
+        if bars5:
+            last = bars5[-1]
+            entry["scan_time_price"] = last["close"]
+            entry["scan_time_bar_et"] = last["t_et"]
+            if latest is None or last["t_et"] > latest:
+                latest = last["t_et"]
+        else:
+            missing.append(sym)
+        if sym in shortlist:
+            entry["intraday_status"] = (
+                intraday_status(bars5[-1]["close"], entry["pivot"], entry["invalidation"])
+                if bars5 else "NOT_AVAILABLE")
+    if missing:
+        report["data_quality"].append(
+            "scan_time_price unavailable (no complete 5-minute bar yet or "
+            "fetch failed): " + ", ".join(missing))
+    return latest
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -415,31 +334,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = ap.parse_args(argv)
 
     try:
-        now_et = datetime.now(ET)
+        now_et, simulated = gates.now_et(ET, adapter.SKILL_CLI)
         try:
             as_of = date.fromisoformat(args.as_of)
         except ValueError:
             raise Refusal(f"--as-of is not a valid date: {args.as_of}")
 
-        # --- spec SHA gate: before any data is fetched
-        actual_sha = spec_commit_sha(REPO_ROOT)
-        if actual_sha is None:
-            raise Refusal(
-                "cannot read the spec commit SHA (no git checkout or no "
-                f"scanner/SCANNER_V1_1_SPEC.md under {REPO_ROOT})")
-        if not sha_accepted(actual_sha, args.accepted_spec_sha):
-            raise Refusal(
-                f"spec commit SHA mismatch: spec/schema last changed in "
-                f"{actual_sha}, accepted is {args.accepted_spec_sha}. A spec "
-                "change needs a new acceptance pass; refusing to run.")
-
-        # --- clean-tree gate: the code that runs is the code that was committed
-        dirty = uncommitted_scanner_changes(REPO_ROOT)
-        if dirty is None:
-            raise Refusal("cannot read git status for scanner/")
-        if dirty:
-            raise Refusal("uncommitted changes under scanner/: "
-                          + "; ".join(dirty[:5]))
+        # --- spec, clean-tree and implementation gates: before any fetch
+        try:
+            actual_sha, impl_files, impl_ref = gates.check_all(
+                args.accepted_spec_sha, args.accepted_impl_ref, REPO_ROOT)
+        except gates.GateError as exc:
+            raise Refusal(str(exc))
 
         # --- date/run-type gate
         if args.run_type == "LIVE":
@@ -447,6 +353,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                 raise Refusal(
                     f"LIVE runs require --as-of = today ET "
                     f"({now_et.date().isoformat()}), got {as_of}")
+            if not adapter.is_trading_day(now_et.date()):
+                raise Refusal(f"LIVE run refused: {now_et.date()} is not an "
+                              "NYSE trading day (KI-002)")
             latest_completed = adapter.latest_completed_session(now_et)
         else:  # IN_SAMPLE_REPLAY
             if as_of > now_et.date():
@@ -456,10 +365,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                               "an NYSE trading day")
             latest_completed = as_of
 
-        impl_files, impl_ref = implementation_manifest(REPO_ROOT)
-        if impl_ref != args.accepted_impl_ref.strip().lower():
-            raise Refusal(f"implementation_ref mismatch: code is {impl_ref}, "
-                          f"accepted is {args.accepted_impl_ref}")
+        # --- outcome log must be usable before anything is fetched (KI-001)
+        default_log = ("outcome_log_live.csv" if args.run_type == "LIVE"
+                       else "outcome_log_replay.csv")
+        log_path = (Path(args.outcome_log) if args.outcome_log
+                    else REPO_ROOT / "scanner" / "runs" / default_log)
+        try:
+            outcomes.check_header(log_path)
+        except outcomes.OutcomeLogError as exc:
+            raise Refusal(str(exc))
 
         # --- data (read-only skill CLI via data_adapter)
         try:
@@ -492,40 +406,42 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         report = assemble_report(args.run_type, as_of, latest_completed,
                                  now_et, bars_by_symbol,
-                                 impl_files, impl_ref)
+                                 impl_files, impl_ref, actual_sha)
         report["data_quality"].extend(integrity_notes)
+        if simulated:
+            report["audit_notes"].append("SIMULATED CLOCK (pipeline_sim only)")
 
-        # --- intraday status for shortlisted names (recorded only)
-        if args.run_type == "LIVE" and adapter.is_trading_day(now_et.date()):
-            intra_session = now_et.date()
+        # --- intraday (recorded only): LIVE uses today's session and fills
+        # scan_time_price for every symbol; a replay records the shortlist's
+        # status against the replayed session only.
+        if args.run_type == "LIVE":
+            report["latest_completed_sip_5m_bar_et"] = _scan_time_prices(
+                report, now_et.date(), now_et)
         else:
-            intra_session = latest_completed
-        by_symbol = {r["symbol"]: r for r in report["results"]}
-        latest_5m_ts: Optional[str] = None
-        for sym in report["selection"]["shortlist"]:
-            entry = by_symbol[sym]
-            try:
-                bars5 = adapter.fetch_intraday_5m(sym, intra_session, now_et)
-            except adapter.AdapterError:
-                bars5 = []
-            if bars5:
-                last = bars5[-1]
-                entry["intraday_status"] = intraday_status(
-                    last["close"], entry["pivot"], entry["invalidation"])
-                if latest_5m_ts is None or last["t_et"] > latest_5m_ts:
-                    latest_5m_ts = last["t_et"]
-            else:
-                entry["intraday_status"] = "NOT_AVAILABLE"
-        report["latest_completed_sip_5m_bar_et"] = latest_5m_ts
+            by_symbol = {r["symbol"]: r for r in report["results"]}
+            latest_5m_ts: Optional[str] = None
+            for sym in report["selection"]["shortlist"]:
+                entry = by_symbol[sym]
+                try:
+                    bars5 = adapter.fetch_intraday_5m(sym, latest_completed, now_et)
+                except adapter.AdapterError:
+                    bars5 = []
+                if bars5:
+                    last = bars5[-1]
+                    entry["intraday_status"] = intraday_status(
+                        last["close"], entry["pivot"], entry["invalidation"])
+                    if latest_5m_ts is None or last["t_et"] > latest_5m_ts:
+                        latest_5m_ts = last["t_et"]
+                else:
+                    entry["intraday_status"] = "NOT_AVAILABLE"
+            report["latest_completed_sip_5m_bar_et"] = latest_5m_ts
 
-        # --- outcome log row count is deterministic (one row per
-        # result); set it before validation so the validated document
-        # is exactly the document that gets written.
-        default_log = ("outcome_log_live.csv" if args.run_type == "LIVE"
-                       else "outcome_log_replay.csv")
-        log_path = (Path(args.outcome_log) if args.outcome_log
-                    else REPO_ROOT / "scanner" / "runs" / default_log)
-        new_rows = outcome_rows_to_write(log_path, report)
+        # --- outcome rows are fixed before validation so the validated
+        # document is exactly the document that gets written.
+        try:
+            new_rows = outcomes.rows_for_report(log_path, report)
+        except outcomes.OutcomeLogError as exc:
+            raise Refusal(str(exc))
         report["outcome_log_rows_written"] = len(new_rows)
 
         # --- schema gate: an invalid report is never written, and the
@@ -542,7 +458,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                   "nothing written.", file=sys.stderr)
             return 3
 
-        written = append_outcome_log(log_path, new_rows)
+        written = outcomes.append(log_path, new_rows)
         if written != report["outcome_log_rows_written"]:
             print("ERROR: outcome log row count mismatch; report not "
                   "written.", file=sys.stderr)

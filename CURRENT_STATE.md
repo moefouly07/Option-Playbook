@@ -90,7 +90,7 @@ Gate:     scanner/MUSE_ACCEPTANCE_TESTS.md (T0-T7)
 
 The scanner is research-only discovery on a fixed 21-symbol watchlist. It never changes CIM-V1.0 and never authorizes trades. V1.1 rules were written after the V1.0 pilot (DECISION_LOG D-009); 2026-10-09 data is in-sample.
 
-Next scanner action: T1b-2 (adopt canonical code, rerun T1 on 21 fixtures), T2 correlation forensic, T1c live pipeline build and review, T3 replay, then T4 live after 10:30 ET on a trading day, then T5-T7. No recurring task before human sign-off.
+Next scanner action: T0-T6 passed (2026-10-12). Adopt the D-022 scheduling package (T7a), migrate the live outcome log (T7b), supervised run-once of each job (T7c), owner sign-off D-023 and recurring tasks (T7d).
 
 ## Version-control rule
 

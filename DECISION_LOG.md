@@ -164,3 +164,16 @@ Decision (applied to the canonical copies in `scanner/src/muse/`):
 - The daily history window (130 completed sessions) is pre-registered in the spec, because Wilder ATR and RSI depend on the seeding length.
 
 `scanner/tests/pipeline_sim/` simulates the pipeline end to end (13 scenarios) without network or vendor data. Muse reviews the diff against its export and adopts the canonical files in T1c-2.
+
+## D-022 - Scheduling package, outcome definitions, KI-001/002/003
+
+Date: 2026-10-12 (ET). Approved by the project owner after T0-T6 passed: all proposed scheduling defaults, including the hourly watch, and the invalidation definition below. No classification rule, parameter, label, or ranking changed.
+
+Decisions:
+
+- Outcome log (spec section 11): returns are measured from `scan_time_price`, the close of the last complete SIP 5-minute bar ending at or before scan time - 20 minutes, because the move between the last daily close and the scan could not have been acted on. `close_pK` counts completed sessions after the scan. The undefined "invalidation hit first" is replaced by `invalidation_close_session`: the first of 10 sessions whose close is below invalidation, `NONE`, `NA`, or blank while pending. Filled values are immutable. The 21 T4 rows are migrated once with the same rule.
+- Statistics stay withheld until 30 finalized candidate rows exist; afterwards only descriptive numbers against a WATCH baseline are reported.
+- Scheduling (spec section 13): official 10:30 ET, hourly watch 11:30-15:30 ET (messages only on state change), outcomes 16:30 ET, weekly Saturday 10:00 ET. The scheduler has no holiday calendar and no failure alerts, so `scheduled_job.py` checks the ET window, the NYSE calendar and every gate itself, messages on every official run and every failure, and halts after 2 consecutive failures.
+- KI-001: an outcome log with an unexpected header is refused before any fetch. KI-002: LIVE runs on non-trading days are refused. KI-003: a 5-minute bar is used only if its end is at or before the request end.
+- One implementation manifest for every entry point (`pipeline_gates.PIPELINE_FILES`, 7 files). Accepted implementation_ref `sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b`.
+- A simulated clock exists only for `scanner/tests/pipeline_sim/` and is ignored unless the skill CLI in use lives under `scanner/tests/`. The simulation now covers 30 scenarios.

@@ -340,6 +340,20 @@
                 }
               }
             }
+          },
+          "scan_time_price": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "LIVE only: close of the last complete SIP 5-minute bar ending at or before scan time - 20 min (D-022)"
+          },
+          "scan_time_bar_et": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "start time (ET) of the bar behind scan_time_price"
           }
         }
       }

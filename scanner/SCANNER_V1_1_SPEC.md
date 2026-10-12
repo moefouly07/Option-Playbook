@@ -45,7 +45,8 @@ This is not a full-market scan and must never be described as one.
 - History window: each run requests the 130 completed daily sessions ending at the latest completed session and computes every indicator over that window (D-021). Wilder ATR and RSI depend on the seeding length, so the window is fixed.
 - Freshness: if SPY's latest completed bar is not the expected session, the run refuses. Any other symbol whose latest bar differs, or whose bars fail integrity checks, is `INSUFFICIENT_DATA` and named in `data_quality`.
 - A symbol whose latest completed daily date differs from SPY's is `INSUFFICIENT_DATA`.
-- Intraday: completed RTH SIP 5-minute bars, requested with `end = now − 20 minutes`. Extended-hours bars removed. Intraday data is **recorded only** in V1.1 (section 9).
+- Intraday: completed RTH SIP 5-minute bars, requested with `end = now − 20 minutes`. Extended-hours bars removed. A bar is used only if its end (start + 5 minutes) is at or before the request end (D-022). Intraday data is **recorded only** in V1.1 (section 9).
+- A LIVE run on a day that is not an NYSE trading day is refused (D-022).
 - IEX quotes are single-venue. Never mix IEX and SIP volume. Never treat delayed data as an execution signal.
 - Every report records `spec_commit_sha`: the last commit that changed this spec or `OUTPUT_SCHEMA.json`.
 
@@ -166,12 +167,47 @@ The run report must validate against `scanner/OUTPUT_SCHEMA.json`, include all 2
 
 `implementation_ref` is a manifest hash over every executed file, computed by `scanner/tools/implementation_ref.py` (D-019): per-file sha256 of UTF-8 bytes with LF line endings, one `path  sha256` line per file sorted by path, then sha256 of the manifest. The report lists the files in `implementation_files`. Live runs use only the committed entry point `scanner/src/muse/run_scan_v11.py`.
 
-## 11. Outcome logging (starts with the first live run)
+## 11. Outcome logging (pre-registered, D-022)
 
-For every symbol in every run, log label, setup, pivot, invalidation, and close at the scan's latest completed daily bar. Later fill forward closes at +1, +5, and +10 sessions, and whether invalidation was hit first. These horizons are pre-registered now so evaluation is not chosen after the fact. Logging is research bookkeeping, not a performance claim.
+Every LIVE run writes one row per symbol per completed daily session to a persistent log outside the repository. A repeated run on the same session writes nothing. Replay runs write to a separate log that is never evaluated.
+
+```text
+columns   run_type, scan_started_at_et, latest_completed_daily_bar_date, symbol,
+          label, setup, pivot, invalidation, reference_close,
+          scan_time_price, scan_time_bar_et,
+          close_p1, close_p5, close_p10, invalidation_close_session
+```
+
+- `reference_close`: close of the latest completed daily session (the bar the labels were computed on).
+- `scan_time_price`: close of the last complete consolidated SIP 5-minute RTH bar whose end is at or before scan time − 20 minutes, same session as the scan. Returns are measured from this price, because the overnight move before the scan could not have been acted on.
+- `close_pK`: close of the K-th completed session whose close is after the scan time (a 10:30 ET scan counts its own session as K = 1). K = 1, 5, 10.
+- `invalidation_close_session`: first K in 1..10 whose close is strictly below the row's invalidation; `NONE` once 10 sessions pass without one; `NA` when the row has no invalidation; blank while pending.
+- Filled values are never overwritten. A later vendor disagreement is reported and the original is kept.
+- The 21 rows written in T4 (2026-10-12) are migrated once: `scan_time_price` is computed from the same rule using their own `scan_started_at_et`.
+
+Statistics are descriptive only and are withheld until 30 candidate rows (CONFIRMED_SETUP or RESEARCH_PASS) are finalized. Then the weekly summary reports, for candidates and for the WATCH baseline: n, mean and median return at +5 and +10 from `scan_time_price`, and the count of candidates with an invalidation close. No edge is claimed from these numbers.
 
 ## 12. Acceptance
 
 V1.1 may be scheduled only after every test in `scanner/MUSE_ACCEPTANCE_TESTS.md` passes and a human signs off in `DECISION_LOG.md`.
 
 The golden fixtures are themselves tested: `scanner/tests/test_fixture_sensitivity.py` requires every listed wrong implementation to fail. Expanding fixtures or mutants is a test change, not a rule change, but is logged in `DECISION_LOG.md`.
+
+## 13. Scheduling (pre-registered, D-022)
+
+All tasks run `scanner/src/muse/scheduled_job.py` from a fresh checkout, with the accepted spec SHA and implementation_ref, and a persistent state directory outside the repository. Times are America/New_York.
+
+```text
+official   10:30 ET, Mon-Fri   LIVE scan; always sends a message (including NO CANDIDATES)
+watch      11:30, 12:30, 13:30, 14:30, 15:30 ET, Mon-Fri
+                               LIVE rerun; sends only when a shortlisted symbol's
+                               intraday_status changes; a changed shortlist is a failure
+outcomes   16:30 ET, Mon-Fri   fills the outcome log; silent unless vendor conflicts
+weekly     Saturday 10:00 ET   summary of runs, failures, shortlists, outcome fill status
+```
+
+- Every job checks its ET window first (official 10:25-11:30, watch minutes 25-49 of hours 11-15, outcomes 16:20-18:00, weekly Saturday). Outside the window nothing runs and an alert is sent.
+- Every job except weekly checks the NYSE calendar. On a weekday holiday the official job sends one "market closed" message; weekends are silent.
+- Every job runs all gates (spec, clean tree, implementation manifest) before doing anything.
+- Two consecutive failures create `state/HALT`. While it exists, jobs do nothing; official and weekly jobs say so. A human removes it after fixing the cause.
+- Messages say "research only, not trade signals" and that SIP data is delayed by at least 20 minutes. They never name option contracts or give instructions.

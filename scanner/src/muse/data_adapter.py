@@ -277,7 +277,9 @@ def fetch_intraday_5m(symbol: str, session_date: date,
     the session precedes both), and it avoids the vendor's free-plan
     rejection of SIP queries whose end reaches into the current day.
     Extended-hours bars are removed; only [09:30, session close) bars on
-    `session_date` are returned, each with its full ET timestamp.
+    `session_date` are returned, each with its full ET timestamp. A bar is
+    returned only if it is provably complete: its end (start + 5 minutes)
+    is at or before the request end (KI-003, D-022).
     """
     end_et = now_et - timedelta(minutes=20)
     session_eod = datetime.combine(session_date, time(23, 59, 59),
@@ -302,9 +304,14 @@ def fetch_intraday_5m(symbol: str, session_date: date,
     for b in _session_bars(node):
         if b["date"] != session_date.isoformat():
             continue
-        t = datetime.fromisoformat(b["t_et"]).time()
-        if RTH_START <= t < close_t:          # extended hours dropped
-            out.append(b)
+        start = datetime.fromisoformat(b["t_et"])
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=ET)
+        if not (RTH_START <= start.time() < close_t):   # extended hours dropped
+            continue
+        if start + timedelta(minutes=5) > end_et:       # not provably complete
+            continue
+        out.append(b)
     return out
 
 

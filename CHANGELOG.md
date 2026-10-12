@@ -1,5 +1,11 @@
 # Changelog
 
+## Scheduling package — 2026-10-12
+
+No classification rule changed. Added `scheduled_job.py`, `outcome_tools.py`, `pipeline_gates.py`; `scan_time_price`; pre-registered outcome definitions and scheduling (spec sections 11 and 13); fixed KI-001, KI-002, KI-003; pipeline_sim extended to 30 scenarios; acceptance steps T7a-T7d (D-022). implementation_ref `sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b`.
+
+---
+
 ## Live pipeline review — 2026-10-11
 
 No classification rule changed. Added Muse's reviewed live pipeline (`run_scan_v11.py`, `data_adapter.py`) with freshness, spec, clean-tree and implementation gates; outcome logs moved to git-ignored `scanner/runs/`; pre-registered 130-session history window; `scanner/tests/pipeline_sim/` (13 scenarios); acceptance step T1c-2 (D-021).

@@ -231,17 +231,70 @@ PASS: 21 rows, correct columns, storage location stated.
 
 ---
 
-## T7 — Human sign-off, then scheduling
+## T7 — Scheduling package (D-022)
 
-Only after T0–T6 pass, add a `DECISION_LOG.md` entry recording the pass evidence and sign-off. Then:
+Accepted implementation_ref for this package:
 
 ```text
-Create one recurring task: run SCANNER-V1.1 at 10:30 America/New_York on US equity exchange trading days only.
-Each run must read scanner/SCANNER_V1_1_SPEC.md from GitHub first and record the commit SHA, produce a schema-valid report (including NO_CANDIDATES days), append outcome-log rows, and notify me.
-Disable the task and notify me on repeated authentication failure, missing same-day SIP data, or schema-validation failure.
-Show the task as it appears in your scheduler UI: name, timezone, schedule rule, holiday handling, notification channel. List the next three exchange holidays or early closes from an official exchange source.
+sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b
 ```
 
-PASS: task visible with correct timezone and rule; holidays match the official exchange calendar; first scheduled report reviewed by a human before trusting the second.
+The accepted spec SHA is whatever this command prints after the package is committed:
 
-Review cadence for the first two weeks: read every report; any schema failure, label drift without data explanation, or fabricated catalyst suspends the schedule.
+```text
+git log -1 --format=%H -- scanner/SCANNER_V1_1_SPEC.md scanner/OUTPUT_SCHEMA.json
+```
+
+### T7a — Adopt the package (no task created)
+
+```text
+T7a: adopt the D-022 scheduling package. Do not create any task. Do not trade.
+
+1. Report main HEAD and the accepted spec SHA (git log -1 --format=%H -- scanner/SCANNER_V1_1_SPEC.md scanner/OUTPUT_SCHEMA.json).
+2. Review the D-022 diff under scanner/src/muse/ against your workspace copies. Confirm the skill CLI request and response contract is unchanged (data_adapter.py changes only the KI-003 completeness filter). Report any objection with evidence; do not edit committed files.
+3. If there is no objection, replace your workspace copies with the committed files and from now on run only fresh checkouts.
+4. From a fresh checkout run:
+   python3 -m unittest discover -s scanner/tests
+   python3 scanner/tests/pipeline_sim/run_pipeline_sim.py
+   python3 scanner/tools/implementation_ref.py scanner/src/muse/data_adapter.py scanner/src/muse/outcome_tools.py scanner/src/muse/pipeline_gates.py scanner/src/muse/run_scan_v11.py scanner/src/muse/scanner_v11.py scanner/src/muse/scheduled_job.py scanner/tools/implementation_ref.py
+5. Real-data probe, no scan, during market hours: call data_adapter.fetch_intraday_5m("SPY", today, now) and show the last bar start time and that its end is at or before now - 20 minutes.
+```
+
+PASS: no contract objection, unit tests OK, pipeline_sim 30/30, implementation_ref equals the value above, probe bar complete.
+
+### T7b — Move and migrate the live outcome log
+
+```text
+T7b: move and migrate the live outcome log. Do not trade.
+
+1. mkdir -p ~/workspace/market-scanner/state and copy ~/workspace/t4-live/outputs/outcome_log_live.csv into it. Keep the original as a backup.
+2. From a fresh checkout:
+   python3 scanner/src/muse/outcome_tools.py migrate --log ~/workspace/market-scanner/state/outcome_log_live.csv --accepted-spec-sha <accepted spec SHA> --accepted-impl-ref sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b
+3. Show the JSON result, the new header, and the AMZN, AMD and META rows.
+```
+
+PASS: `migrated 21, backfilled 21`; 15-column header; every `scan_time_bar_et` is `2026-10-12T11:05:00-04:00` (the last bar ending at or before 11:11:41 ET).
+
+### Task body for every scheduled job
+
+Replace MODE with official, watch, outcomes or weekly, and SPEC with the accepted spec SHA.
+
+```text
+1. cd ~/workspace/market-scanner && rm -rf checkout && git clone -q https://github.com/moefouly07/Option-Playbook.git checkout
+2. python3 checkout/scanner/src/muse/scheduled_job.py --mode MODE --state ~/workspace/market-scanner/state --accepted-spec-sha SPEC --accepted-impl-ref sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b
+3. Read the single JSON line it prints. If "send" is true, post "title" as the title and "body" as the message, verbatim, adding nothing. If "send" is false, post nothing.
+4. If the clone or the command fails, or the output is not one valid JSON line, post the title "SCANNER JOB CRASHED (MODE)" and the last 20 lines of stderr with anything token-like removed.
+Never trade, never name an option contract, never edit files in the checkout.
+```
+
+### T7c — One supervised run of each mode
+
+Create run-once tasks (timezone America/New_York) with the task body above: official at 10:31, watch at 11:31, outcomes at 16:31 on the next trading day; weekly at 10:00 on the next Saturday. Report each run-history entry and the exact message posted (or that nothing was posted), and confirm the scheduled run fetched data without any secret appearing in files or messages.
+
+PASS: official message posted; watch silent or a state change; outcomes silent; no failure, no HALT; weekly shows statistics withheld.
+
+### T7d — Owner sign-off, then recurring tasks
+
+After T7a-T7c pass, the owner records D-023. Then create the recurring tasks with the task body above, timezone America/New_York: official 10:30 Mon-Fri; watch 11:30, 12:30, 13:30, 14:30, 15:30 Mon-Fri; outcomes 16:30 Mon-Fri; weekly Saturday 10:00. Show the task list as it appears in the scheduler.
+
+Review cadence for the first two weeks: read every message. Any schema failure, label drift without data explanation, fabricated catalyst, or HALT suspends the schedule until reviewed.

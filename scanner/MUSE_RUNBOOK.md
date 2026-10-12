@@ -12,19 +12,11 @@ Follow `scanner/MUSE_ACCEPTANCE_TESTS.md` T0 to T7 in order. No recurring task b
 
 ## Each scheduled run (after T7)
 
-1. Confirm exchange calendar and session from an exchange source.
-2. Fetch completed SIP daily bars (latest completed session) and same-day completed RTH SIP 5-minute bars with `end = now - 20 min`.
-3. Run only the committed entry point:
-   `python scanner/src/muse/run_scan_v11.py --run-type LIVE --as-of <today ET> --accepted-spec-sha <accepted> --accepted-impl-ref <accepted>`
-   It classifies all 21 symbols, selects at most three or returns `NO_CANDIDATES`, and refuses on a spec, code, or data-freshness mismatch.
-4. Add recorded-only fields: regime, catalysts with exact timestamps, earnings status, intraday status, `OPTIONS_NOT_VERIFIED`.
-5. Validate the report against `scanner/OUTPUT_SCHEMA.json`.
-6. Outcome-log rows are appended automatically to git-ignored `scanner/runs/outcome_log_live.csv` (one row per session and symbol).
-7. Notify the user with the verdict, shortlist, and data-quality notes.
+Every task clones the repository fresh and runs `scanner/src/muse/scheduled_job.py` with the accepted spec SHA and implementation_ref (task body in `MUSE_ACCEPTANCE_TESTS.md`, T7). The job checks the ET window, the NYSE calendar and all gates, runs its mode, and prints one JSON line; the task posts it verbatim when `send` is true. State lives in `~/workspace/market-scanner/state/` (outcome log, reports, health, HALT).
 
 ## Stop conditions
 
-Disable the task and notify the user on: repeated authentication failure, missing same-day SIP data, schema-validation failure, or a spec SHA change.
+Two consecutive failures create `state/HALT`; jobs then do nothing until a human fixes the cause and deletes it. A spec or code change makes every job refuse until new accepted values are adopted.
 
 ## Never
 
