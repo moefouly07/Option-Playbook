@@ -47,6 +47,7 @@ This is not a full-market scan and must never be described as one.
 - A symbol whose latest completed daily date differs from SPY's is `INSUFFICIENT_DATA`.
 - Intraday: completed RTH SIP 5-minute bars, requested with `end = now − 20 minutes`. Extended-hours bars removed. A bar is used only if its end (start + 5 minutes) is at or before the request end (D-022). Intraday data is **recorded only** in V1.1 (section 9).
 - A LIVE run on a day that is not an NYSE trading day is refused (D-022).
+- Data availability (D-023): daily bars are never requested for the current ET calendar date. The market-data plan refuses such requests even after the close, and a same-day close can still be revised. LIVE runs classify on the latest trading day strictly before today, and day T's close enters the outcome log on day T + 1.
 - IEX quotes are single-venue. Never mix IEX and SIP volume. Never treat delayed data as an execution signal.
 - Every report records `spec_commit_sha`: the last commit that changed this spec or `OUTPUT_SCHEMA.json`.
 
@@ -180,7 +181,7 @@ columns   run_type, scan_started_at_et, latest_completed_daily_bar_date, symbol,
 
 - `reference_close`: close of the latest completed daily session (the bar the labels were computed on).
 - `scan_time_price`: close of the last complete consolidated SIP 5-minute RTH bar whose end is at or before scan time − 20 minutes, same session as the scan. Returns are measured from this price, because the overnight move before the scan could not have been acted on.
-- `close_pK`: close of the K-th completed session whose close is after the scan time (a 10:30 ET scan counts its own session as K = 1). K = 1, 5, 10.
+- `close_pK`: close of the K-th completed session whose close is after the scan time (a 10:30 ET scan counts its own session as K = 1). K = 1, 5, 10. Each close is filled on the following trading day (D-023).
 - `invalidation_close_session`: first K in 1..10 whose close is strictly below the row's invalidation; `NONE` once 10 sessions pass without one; `NA` when the row has no invalidation; blank while pending.
 - Filled values are never overwritten. A later vendor disagreement is reported and the original is kept.
 - The 21 rows written in T4 (2026-10-12) are migrated once: `scan_time_price` is computed from the same rule using their own `scan_started_at_et`.
@@ -202,11 +203,12 @@ official   10:30 ET, Mon-Fri   LIVE scan; always sends a message (including NO C
 watch      11:30, 12:30, 13:30, 14:30, 15:30 ET, Mon-Fri
                                LIVE rerun; sends only when a shortlisted symbol's
                                intraday_status changes; a changed shortlist is a failure
-outcomes   16:30 ET, Mon-Fri   fills the outcome log; silent unless vendor conflicts
+outcomes   09:15 ET, Mon-Fri   fills the outcome log through the previous session;
+                               silent unless vendor conflicts (D-023)
 weekly     Saturday 10:00 ET   summary of runs, failures, shortlists, outcome fill status
 ```
 
-- Every job checks its ET window first (official 10:25-11:30, watch minutes 25-49 of hours 11-15, outcomes 16:20-18:00, weekly Saturday). Outside the window nothing runs and an alert is sent.
+- Every job checks its ET window first (official 10:25-11:30, watch minutes 25-49 of hours 11-15, outcomes 09:00-10:00, weekly Saturday). Outside the window nothing runs and an alert is sent.
 - Every job except weekly checks the NYSE calendar. On a weekday holiday the official job sends one "market closed" message; weekends are silent.
 - Every job runs all gates (spec, clean tree, implementation manifest) before doing anything.
 - Two consecutive failures create `state/HALT`. While it exists, jobs do nothing; official and weekly jobs say so. A human removes it after fixing the cause.

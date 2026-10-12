@@ -236,7 +236,7 @@ PASS: 21 rows, correct columns, storage location stated.
 Accepted implementation_ref for this package:
 
 ```text
-sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b
+sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca
 ```
 
 The accepted spec SHA is whatever this command prints after the package is committed:
@@ -260,7 +260,9 @@ T7a: adopt the D-022 scheduling package. Do not create any task. Do not trade.
 5. Real-data probe, no scan, during market hours: call data_adapter.fetch_intraday_5m("SPY", today, now) and show the last bar start time and that its end is at or before now - 20 minutes.
 ```
 
-PASS: no contract objection, unit tests OK, pipeline_sim 30/30, implementation_ref equals the value above, probe bar complete.
+PASS: no contract objection, unit tests OK, pipeline_sim 34/34, implementation_ref equals the value above, probe bar complete.
+
+T7a attempt 2 (after D-023): repeat steps 1-4 on the D-023 commit. The migrated outcome log is not touched again.
 
 ### T7b — Move and migrate the live outcome log
 
@@ -269,7 +271,7 @@ T7b: move and migrate the live outcome log. Do not trade.
 
 1. mkdir -p ~/workspace/market-scanner/state and copy ~/workspace/t4-live/outputs/outcome_log_live.csv into it. Keep the original as a backup.
 2. From a fresh checkout:
-   python3 scanner/src/muse/outcome_tools.py migrate --log ~/workspace/market-scanner/state/outcome_log_live.csv --accepted-spec-sha <accepted spec SHA> --accepted-impl-ref sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b
+   python3 scanner/src/muse/outcome_tools.py migrate --log ~/workspace/market-scanner/state/outcome_log_live.csv --accepted-spec-sha <accepted spec SHA> --accepted-impl-ref sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca
 3. Show the JSON result, the new header, and the AMZN, AMD and META rows.
 ```
 
@@ -281,7 +283,7 @@ Replace MODE with official, watch, outcomes or weekly, and SPEC with the accepte
 
 ```text
 1. cd ~/workspace/market-scanner && rm -rf checkout && git clone -q https://github.com/moefouly07/Option-Playbook.git checkout
-2. python3 checkout/scanner/src/muse/scheduled_job.py --mode MODE --state ~/workspace/market-scanner/state --accepted-spec-sha SPEC --accepted-impl-ref sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b
+2. python3 checkout/scanner/src/muse/scheduled_job.py --mode MODE --state ~/workspace/market-scanner/state --accepted-spec-sha SPEC --accepted-impl-ref sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca
 3. Read the single JSON line it prints. If "send" is true, post "title" as the title and "body" as the message, verbatim, adding nothing. If "send" is false, post nothing.
 4. If the clone or the command fails, or the output is not one valid JSON line, post the title "SCANNER JOB CRASHED (MODE)" and the last 20 lines of stderr with anything token-like removed.
 Never trade, never name an option contract, never edit files in the checkout.
@@ -289,12 +291,12 @@ Never trade, never name an option contract, never edit files in the checkout.
 
 ### T7c — One supervised run of each mode
 
-Create run-once tasks (timezone America/New_York) with the task body above: official at 10:31, watch at 11:31, outcomes at 16:31 on the next trading day; weekly at 10:00 on the next Saturday. Report each run-history entry and the exact message posted (or that nothing was posted), and confirm the scheduled run fetched data without any secret appearing in files or messages.
+Create run-once tasks (timezone America/New_York) with the task body above: outcomes at 09:16, official at 10:31, watch at 11:31 on the next trading day; weekly at 10:00 on the next Saturday. Report each run-history entry and the exact message posted (or that nothing was posted), and confirm the scheduled run fetched data without any secret appearing in files or messages.
 
-PASS: official message posted; watch silent or a state change; outcomes silent; no failure, no HALT; weekly shows statistics withheld.
+PASS: outcomes silent with the previous session filled; official message posted; watch silent or a state change; no failure, no HALT; weekly shows statistics withheld.
 
 ### T7d — Owner sign-off, then recurring tasks
 
-After T7a-T7c pass, the owner records D-023. Then create the recurring tasks with the task body above, timezone America/New_York: official 10:30 Mon-Fri; watch 11:30, 12:30, 13:30, 14:30, 15:30 Mon-Fri; outcomes 16:30 Mon-Fri; weekly Saturday 10:00. Show the task list as it appears in the scheduler.
+After T7a-T7c pass, the owner records D-024. Then create the recurring tasks with the task body above, timezone America/New_York: outcomes 09:15 Mon-Fri; official 10:30 Mon-Fri; watch 11:30, 12:30, 13:30, 14:30, 15:30 Mon-Fri; weekly Saturday 10:00. If the scheduler cannot restrict to Mon-Fri, daily is fine: the job is silent on weekends. Show the task list as it appears in the scheduler.
 
 Review cadence for the first two weeks: read every message. Any schema failure, label drift without data explanation, fabricated catalyst, or HALT suspends the schedule until reviewed.

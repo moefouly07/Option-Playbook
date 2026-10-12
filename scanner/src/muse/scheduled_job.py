@@ -53,7 +53,7 @@ TITLE_MAX = 120
 WINDOWS = {
     "official": lambda t: time(10, 25) <= t.time() < time(11, 30),
     "watch": lambda t: 11 <= t.hour <= 15 and 25 <= t.minute < 50,
-    "outcomes": lambda t: time(16, 20) <= t.time() < time(18, 0),
+    "outcomes": lambda t: time(9, 0) <= t.time() < time(10, 0),
     "weekly": lambda t: t.weekday() == 5,
 }
 

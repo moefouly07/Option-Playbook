@@ -183,6 +183,7 @@ def main() -> int:
               live is not None and all(r["scan_time_price"] is not None for r in live["results"])
               and bars_et == {"2026-10-12T11:05:00-04:00"}, str(bars_et))
         lr = rows("live.csv")
+        shutil.copy(tmp / "live.csv", tmp / "lag.csv")
         check("S13 live outcome rows carry scan_time_price", len(lr) == 21
               and all(r["scan_time_price"] for r in lr), "")
         code, err, _ = scan(run_type="LIVE", as_of="2026-10-10", log="l7.csv",
@@ -204,6 +205,26 @@ def main() -> int:
         check("S16 migrate backfills scan_time_price deterministically",
               code == 0 and res.get("backfilled") == 2 and
               all(float(r["scan_time_price"]) == live_px[r["symbol"]] for r in mig), err.strip()[-120:])
+
+        # ---------------- data-plan model and fill lag (D-023, KI-004)
+        p = subprocess.run([sys.executable, str(fake_cli), "--symbols", "SPY", "--feed", "sip",
+                            "--timeframe", "1Day", "--bars", "5", "--end", "2026-10-12"],
+                           capture_output=True, text=True, env=env(now="2026-10-12T16:31:00-04:00"))
+        check("S28 plan model refuses a same-day daily request", p.returncode != 0 and "403" in p.stdout,
+              p.stdout[:120])
+        code, res, err = otools("update", "lag.csv", "2026-10-12T16:31:00-04:00")
+        check("S29 same-evening update succeeds and fills no close yet",
+              code == 0 and all(r["close_p1"] == "" for r in rows("lag.csv")), f"{res} {err.strip()[-160:]}")
+        code, res, err = otools("update", "lag.csv", "2026-10-13T09:15:00-04:00")
+        lag = {r["symbol"]: r for r in rows("lag.csv")}
+        aapl_1012 = {b["date"].isoformat(): b["c"] for b in fake.series("AAPL")}["2026-10-12"]
+        check("S30 next-morning update fills day T close", code == 0 and lag["AAPL"]["close_p1"] != ""
+              and float(lag["AAPL"]["close_p1"]) == aapl_1012, f"{res} {err.strip()[-160:]}")
+        code, err, rep = scan(run_type="LIVE", as_of="2026-10-12", log="l11.csv", out="after.json",
+                              now="2026-10-12T16:31:00-04:00")
+        lab = {r["symbol"]: r["label"] for r in rep["results"]} if rep else {}
+        check("S31 LIVE after the close uses the latest fetchable session", code == 0
+              and rep["latest_completed_daily_bar_date"] == AS_OF and lab == exp_labels, err.strip()[-160:])
 
         # ---------------- outcome update
         code, res, err = otools("update", "live.csv", "2026-10-27T17:00:00-04:00")
@@ -247,7 +268,7 @@ def main() -> int:
         check("S24 holiday: official says closed, watch silent", o["status"] == "MARKET_CLOSED"
               and o["send"] is True and w["status"] == "MARKET_CLOSED" and w["send"] is False,
               f"{o['status']} {w['status']}")
-        oc, _ = sched("outcomes", "2026-10-27T16:31:00-04:00", "st")
+        oc, _ = sched("outcomes", "2026-10-28T09:15:00-04:00", "st")
         st_rows = rows("st/outcome_log_live.csv")
         check("S25 outcomes job fills the log silently", oc["status"] == "OK" and oc["send"] is False
               and bool(st_rows) and all(r["close_p10"] for r in st_rows), f"{oc['status']} {oc['body'][:200]}")

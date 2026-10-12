@@ -162,6 +162,18 @@ def latest_completed_session(now_et: datetime) -> date:
     return previous_trading_day(today)
 
 
+def latest_available_session(now_et: datetime) -> date:
+    """Latest session whose daily bar may be requested and trusted at `now_et`.
+
+    Always the trading day strictly before today's ET calendar date
+    (KI-004, D-023). The market-data plan refuses consolidated SIP daily
+    requests that end on the current calendar date, even after the close,
+    and a same-day close can still be revised. So day T's daily bar is
+    first used on day T + 1.
+    """
+    return previous_trading_day(now_et.date())
+
+
 # ----------------------------------------------------------------- CLI calls
 
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Data-availability fix — 2026-10-12
+
+No classification rule changed. Daily bars are never requested for the current ET date (`latest_available_session`); outcomes job moved to 09:15 ET; fake CLI models the data plan; pipeline_sim 34 scenarios (D-023, KI-004). implementation_ref `sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca`.
+
+---
+
 ## Scheduling package — 2026-10-12
 
 No classification rule changed. Added `scheduled_job.py`, `outcome_tools.py`, `pipeline_gates.py`; `scan_time_price`; pre-registered outcome definitions and scheduling (spec sections 11 and 13); fixed KI-001, KI-002, KI-003; pipeline_sim extended to 30 scenarios; acceptance steps T7a-T7d (D-022). implementation_ref `sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b`.

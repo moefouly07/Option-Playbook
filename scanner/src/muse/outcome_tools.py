@@ -16,6 +16,8 @@ Definitions (pre-registered before any outcome was observed):
 - invalidation_close_session: first K in 1..10 whose close is strictly below
   the row's invalidation; "NONE" once 10 sessions are observed without one;
   "NA" for rows without an invalidation level; blank while pending.
+- Day T's close is first filled on day T + 1: daily bars ending on the
+  current ET calendar date are never requested (D-023, KI-004).
 - Filled values are never overwritten. A later disagreement with vendor
   data is reported as a conflict and the original value is kept.
 
@@ -207,7 +209,7 @@ def update(path: Path, now: datetime) -> Dict[str, object]:
     if not rows:
         return {"filled": 0, "conflicts": [], "pending_rows": 0}
     symbols = sorted({r["symbol"] for r in rows})
-    end = adapter.latest_completed_session(now)
+    end = adapter.latest_available_session(now)   # never today (D-023)
     bars = adapter.fetch_daily_bars(symbols, end)
     filled, conflicts, pending = 0, [], 0
     for r in rows:

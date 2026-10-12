@@ -5,8 +5,11 @@ Serves the SYNTHETIC golden-fixture bars re-dated onto real NYSE sessions
 ending at the anchor session 2026-10-09, followed by a deterministic
 synthetic continuation, in the same JSON shape the real CLI returns. 5Min
 requests get synthetic RTH and extended-hours bars, including a bar that
-starts before but ends after the request end (to exercise KI-003). Never
-touches the network. Scenarios (env FAKE_SCENARIO):
+starts before but ends after the request end (to exercise KI-003). It also
+models the free market-data plan (KI-004): a daily request ending on the
+current ET calendar date, or an intraday request ending less than 15 minutes
+ago, is refused with HTTP 403, using the simulated clock when one is set.
+Never touches the network. Scenarios (env FAKE_SCENARIO):
   normal          every symbol complete through --end
   stale_all       every symbol is missing the --end session
   stale_one       only MU is missing the --end session
@@ -84,6 +87,15 @@ def intraday(day_bar):
              "l": b["p"] * 0.9995, "c": b["p"], "v": 1000.0, "complete": True} for b in out]
 
 
+PLAN_403 = ('Alpaca HTTP 403: {"message":"subscription does not permit '
+            'querying recent SIP data"}')
+
+
+def sim_now():
+    s = os.environ.get("SCANNER_SIM_NOW")
+    return datetime.fromisoformat(s).astimezone(A.ET) if s else datetime.now(A.ET)
+
+
 def main():
     ap = argparse.ArgumentParser()
     for a in ("--symbols", "--feed", "--timeframe", "--end", "--start", "--adjustment"):
@@ -94,6 +106,14 @@ def main():
         print(json.dumps({"ok": False, "error": "non-SIP feed requested"}))
         return
     scenario = os.environ.get("FAKE_SCENARIO", "normal")
+    now = sim_now()
+    if a.timeframe == "5Min":
+        refused = datetime.fromisoformat(a.end) > now - timedelta(minutes=15)
+    else:
+        refused = date.fromisoformat(a.end[:10]) >= now.date()
+    if refused:
+        print(json.dumps({"ok": False, "error": PLAN_403}))
+        sys.exit(1)
     out = {"ok": True, "symbols": {}}
     for sym in a.symbols.split(","):
         full = series(sym)

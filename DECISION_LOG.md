@@ -177,3 +177,17 @@ Decisions:
 - KI-001: an outcome log with an unexpected header is refused before any fetch. KI-002: LIVE runs on non-trading days are refused. KI-003: a 5-minute bar is used only if its end is at or before the request end.
 - One implementation manifest for every entry point (`pipeline_gates.PIPELINE_FILES`, 7 files). Accepted implementation_ref `sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b`.
 - A simulated clock exists only for `scanner/tests/pipeline_sim/` and is ignored unless the skill CLI in use lives under `scanner/tests/`. The simulation now covers 30 scenarios.
+
+## D-023 - Data availability: never request today's daily bar (KI-004)
+
+Date: 2026-10-12 (ET). No classification rule, parameter, label, or ranking changed.
+
+Context: the first supervised scheduled run (T7c, outcomes at 16:31 ET) failed with HTTP 403 "subscription does not permit querying recent SIP data". Muse showed with direct probes that the market-data plan refuses consolidated SIP daily requests ending on the current calendar date even after the close, while the previous session works. The D-022 simulation missed it because the fake CLI did not model the plan; Muse caught it, posted the failure, and changed nothing.
+
+Decision:
+
+- `data_adapter.latest_available_session(now)` = the trading day strictly before today's ET date. LIVE runs and the outcome updater both use it, so no code path requests today's daily bar. During the session this is identical to D-022 behaviour. Beyond the plan limit, a same-day close can still be revised, so waiting a day is also the safer data rule.
+- The outcomes job moves to 09:15 ET (window 09:00-10:00) and fills closes through the previous session. Day T's close enters the log on day T + 1.
+- The fake CLI now refuses daily requests ending today and intraday requests ending less than 15 minutes ago. Run against the D-022 code, the extended simulation reproduces the exact 403; against the fix it passes 34/34.
+- Accepted implementation_ref `sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca` (was `sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b`). The spec changes, so the accepted spec SHA changes too.
+- Owner sign-off for recurring tasks moves to D-024.

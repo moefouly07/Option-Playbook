@@ -20,8 +20,9 @@ One row per attempt. Never delete rows; add a new attempt instead.
 | T6 | 1 | 2026-10-12 | 6df1835 | PASS | Persistent live log ~/workspace/t4-live/outputs/outcome_log_live.csv: 13-column header, 21 rows one per symbol, scalar fields only, no vendor bars. |
 | T7a | 1 | 2026-10-12 | 77bcbcf (spec 77bcbcf8b90a86908aad16329f364088f5f98663) | PASS | No objection: scanner_v11.py byte-identical; data_adapter.py changes only the KI-003 filter, CLI request and parse unchanged. Workspace copies replaced (cmp). Unit tests 16 OK, pipeline_sim 30/30, implementation_ref sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b. Probe 14:04 ET: 50 SPY bars, last 13:35-13:40, cutoff 13:44:43. Independent clone of GitHub matches the reviewed package. |
 | T7b | 1 | | | | Move and migrate the live outcome log; scan_time_price backfilled for the 21 T4 rows. |
-| T7c | 1 | | | | One supervised run-once of official, watch, outcomes (and weekly when due). |
-| T7d | sign-off | | | | Owner sign-off (D-023), then recurring tasks. |
+| T7c | 1 | 2026-10-12 | 77bcbcf (spec 77bcbcf8) | FAILED (design defect found) | Outcomes run-once at 16:31 ET: job printed one valid JSON line and posted "SCANNER FAILED (outcomes)"; outcome update refused with HTTP 403 (subscription does not permit querying recent SIP data). Muse probed: daily end=2026-10-12 refused after the close, end=2026-10-09 accepted. No rows written, no secret in state or logs, no files edited. Root cause KI-004, fixed in D-023. |
+| T7c | 2 | | | | Repeat after T7a attempt 2: outcomes 09:16, official 10:31, watch 11:31; weekly Saturday 10:00. |
+| T7d | sign-off | | | | Owner sign-off (D-024), then recurring tasks. |
 
 ## Known issues
 
@@ -32,3 +33,4 @@ One row per attempt. Never delete rows; add a new attempt instead.
 | KI-003 | T4 review | fetch_intraday_5m filters bars by start time only; when the request end falls inside a 5-minute bar, that bar can be returned although it is not provably complete. The T4 criterion measured bar start (21m41s); by bar end the last bar was 16m41s old. | Drop any bar whose start + 5 min is after the request end; fix with KI-001 and KI-002. |
 
 KI-001, KI-002 and KI-003 are fixed in D-022 (effective once T7a adopts the package).
+| KI-004 | T7c | The market-data plan refuses consolidated SIP daily requests ending on the current ET calendar date, even after the close; the D-022 outcomes job at 16:31 and any LIVE run after 16:00 requested exactly that. | Fixed in D-023: never request today's daily bar; outcomes move to 09:15 ET. |

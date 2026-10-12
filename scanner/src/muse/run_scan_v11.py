@@ -1,6 +1,7 @@
 # Canonical repository copy. Base: Muse T1c export (run_scan_v11.py, sha256 7016fa88ed7a4004...),
 # decoded byte-exact and reviewed. Review fixes applied per DECISION_LOG D-021;
-# shared gates, outcome module, KI-001/002/003 and scan_time_price per D-022.
+# shared gates, outcome module, KI-001/002/003 and scan_time_price per D-022;
+# latest available session per D-023 (KI-004).
 """SCANNER-V1.1 single entry point (Muse workspace copy).
 
 Usage (from the repository root):
@@ -356,7 +357,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             if not adapter.is_trading_day(now_et.date()):
                 raise Refusal(f"LIVE run refused: {now_et.date()} is not an "
                               "NYSE trading day (KI-002)")
-            latest_completed = adapter.latest_completed_session(now_et)
+            latest_completed = adapter.latest_available_session(now_et)
         else:  # IN_SAMPLE_REPLAY
             if as_of > now_et.date():
                 raise Refusal("IN_SAMPLE_REPLAY --as-of is in the future")
