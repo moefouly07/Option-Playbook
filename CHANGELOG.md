@@ -1,5 +1,11 @@
 # Changelog
 
+## CIM-V1.0 clarification C-001 — 2026-10-12
+
+No CIM rule changed. Added `strategy/CLARIFICATIONS.md` (C-001: ATR5 current at every evaluated timestamp; C-002 seeding pending) and acceptance tests A25-A26 (D-024). Scanner sign-off renumbered to D-025.
+
+---
+
 ## Data-availability fix — 2026-10-12
 
 No classification rule changed. Daily bars are never requested for the current ET date (`latest_available_session`); outcomes job moved to 09:15 ET; fake CLI models the data plan; pipeline_sim 34 scenarios (D-023, KI-004). implementation_ref `sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca`.

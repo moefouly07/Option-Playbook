@@ -80,6 +80,7 @@ The frozen strategy is a hypothesis to test, not a proven edge.
 
 - `strategy/PHASE_1_CIM_V1_FROZEN.md`
 - `strategy/RULE_DEFINITIONS.md`
+- `strategy/CLARIFICATIONS.md`
 - `strategy/OPTION_TRANSLATION.md`
 
 ### Skills

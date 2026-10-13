@@ -238,3 +238,24 @@ Never substitute last/mid/mark silently.
 Changing any bar after the decision timestamp must not alter an earlier signal decision.
 
 This is the look-ahead-bias guard.
+
+## A25 — ATR5 is current at each evaluated timestamp (C-001)
+
+Given a put setup and ATR5 values supplied directly:
+
+```text
+ORL = 100.00
+ATR5 after the 5m bar starting 09:50 = 0.40    (band 99.90 / 100.10)
+ATR5 after the 5m bar starting 10:10 = 0.80    (band 99.80 / 100.20)
+put break: 5m bar starting 10:00 closes 99.80
+1m bar starting 10:15: high 100.15, close 99.95
+```
+
+Expected: the bar starting 10:15 is evaluated at 10:16 with ATR5 = 0.80. It enters the band and closes below ORL, so it is the retest. It is not a deep wick and does not cancel the setup. An implementation that keeps ATR5 = 0.40 from 09:55 would wrongly cancel the setup.
+
+## A26 — 5-minute bar completion
+
+At an evaluated time t, ATR5 uses only 5-minute bars whose start + 5 minutes <= t.
+
+Expected: for an entry decided at 10:22:00, ATR5 comes from the bar starting 10:15. Changing the bar starting 10:20 must not change the entry, the stop, the target, or the R/ATR5 record.
+

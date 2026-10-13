@@ -41,6 +41,7 @@ Read:
 CURRENT_STATE.md
 strategy/PHASE_1_CIM_V1_FROZEN.md
 strategy/RULE_DEFINITIONS.md
+strategy/CLARIFICATIONS.md
 ```
 
 ### Backtest/coding request
@@ -53,6 +54,7 @@ GOVERNANCE.md
 AGENTS.md
 strategy/PHASE_1_CIM_V1_FROZEN.md
 strategy/RULE_DEFINITIONS.md
+strategy/CLARIFICATIONS.md
 testing/BACKTEST_PROTOCOL.md
 testing/ACCEPTANCE_TESTS.md
 DATA_CONTRACT.md

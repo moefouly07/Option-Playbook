@@ -23,7 +23,7 @@ One row per attempt. Never delete rows; add a new attempt instead.
 | T7b | 1 | | | | Move and migrate the live outcome log; scan_time_price backfilled for the 21 T4 rows. |
 | T7c | 1 | 2026-10-12 | 77bcbcf (spec 77bcbcf8) | FAILED (design defect found) | Outcomes run-once at 16:31 ET: job printed one valid JSON line and posted "SCANNER FAILED (outcomes)"; outcome update refused with HTTP 403 (subscription does not permit querying recent SIP data). Muse probed: daily end=2026-10-12 refused after the close, end=2026-10-09 accepted. No rows written, no secret in state or logs, no files edited. Root cause KI-004, fixed in D-023. |
 | T7c | 2 | | | | Repeat after T7a attempt 2: outcomes 09:16, official 10:31, watch 11:31; weekly Saturday 10:00. |
-| T7d | sign-off | | | | Owner sign-off (D-024), then recurring tasks. |
+| T7d | sign-off | | | | Owner sign-off (D-025), then recurring tasks. |
 
 ## Known issues
 

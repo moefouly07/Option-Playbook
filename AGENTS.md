@@ -17,6 +17,7 @@ If work touches CIM-V1 logic, also read:
 ```text
 strategy/PHASE_1_CIM_V1_FROZEN.md
 strategy/RULE_DEFINITIONS.md
+strategy/CLARIFICATIONS.md
 testing/ACCEPTANCE_TESTS.md
 DATA_CONTRACT.md
 ```

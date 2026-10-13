@@ -191,3 +191,15 @@ Decision:
 - The fake CLI now refuses daily requests ending today and intraday requests ending less than 15 minutes ago. Run against the D-022 code, the extended simulation reproduces the exact 403; against the fix it passes 34/34.
 - Accepted implementation_ref `sha256:06b4d1c8860ce1400f403205b288e03236ca059d812b51f8b1fe852cc3fc30ca` (was `sha256:0c31a73ebac963f4f75a936a59c2ce92fe415c4674426ac4c2f5d76e7ab19a6b`). The spec changes, so the accepted spec SHA changes too.
 - Owner sign-off for recurring tasks moves to D-024.
+
+## D-024 - CIM-V1.0 clarification C-001: ATR5 is current at every evaluated timestamp
+
+Date: 2026-10-12 (ET). Owner decision. Clarification, not a rule change; CIM-V1.0 stays frozen.
+
+Context: Muse's forward-log engine fixed ATR5 at its 09:55 value. CIM §3 says to use only information available at the evaluated timestamp but does not say whether ATR5 is fixed or updated. None of A01-A24 decides it. On 2026-10-12 the choice did not change the trade, but on another day a different band width can select a different retest bar or cancel a setup. Following AGENTS.md, the ambiguity was documented instead of being resolved by results.
+
+Decision: ATR5 is recomputed at every evaluated timestamp from the most recent complete 5-minute RTH bar (`strategy/CLARIFICATIONS.md`, C-001; tests A25 and A26). Chosen before any validated forward result exists; the single forward-log row so far is UNVALIDATED and is recomputed under C-001.
+
+Open: the ATR5 series seeding convention must be reported by the implementation and pinned as C-002 before A01-A26 acceptance.
+
+The scanner is unaffected; its spec and implementation manifest do not change. Scanner sign-off moves to D-025.

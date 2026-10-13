@@ -92,6 +92,8 @@ The scanner is research-only discovery on a fixed 21-symbol watchlist. It never 
 
 Next scanner action: T7c attempt 1 found KI-004 (data plan refuses same-day daily bars); fixed in D-023. Re-adopt (T7a attempt 2), repeat supervised runs (T7c attempt 2), then owner sign-off D-024 and recurring tasks (T7d).
 
+CIM forward log (Muse, research only): UNVALIDATED until the implementation is exported to the repository, C-002 seeding is pinned, and A01-A26 pass. C-001 (D-024): ATR5 is current at every evaluated timestamp.
+
 ## Version-control rule
 
 Do not edit frozen V1 behavior after observing performance.
