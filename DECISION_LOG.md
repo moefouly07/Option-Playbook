@@ -203,3 +203,15 @@ Decision: ATR5 is recomputed at every evaluated timestamp from the most recent c
 Open: the ATR5 series seeding convention must be reported by the implementation and pinned as C-002 before A01-A26 acceptance.
 
 The scanner is unaffected; its spec and implementation manifest do not change. Scanner sign-off moves to D-025.
+
+## D-025 - CIM-V1.0 clarification C-002: ATR5 series construction
+
+Date: 2026-10-12 (ET). Clarification, not a rule change.
+
+Context: C-001 left the ATR5 series seeding open. Muse reported the convention its forward-log engine uses: the completed 5-minute RTH bars of the 3 previous sessions plus the current one, standard Wilder true range with the overnight gap included through the previous bar's close, first true range high - low, seed = mean of the first 14 true ranges.
+
+Decision: pin that convention as C-002 (`strategy/CLARIFICATIONS.md`, test A27). It is the standard Wilder definition, it is what the implementation already did, and it is fixed before any validated forward result exists, so it is not chosen by outcome.
+
+Also: the C-001 re-run of 2026-10-12 kept every structural field of the put trade; only R/ATR5 changed (0.6223 to 0.5841, ATR5 0.4109 from the bar starting 10:15). Muse confirmed its earlier table used the bar starting 10:20 (complete at 10:25) for a 10:22 entry, which C-001 now forbids. The logged CSV row stays as written and UNVALIDATED; the recompute is kept as a diagnostic.
+
+Numbering: decision numbers are no longer reserved in advance. The scanner sign-off will take the next free number when it is made.

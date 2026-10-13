@@ -259,3 +259,14 @@ At an evaluated time t, ATR5 uses only 5-minute bars whose start + 5 minutes <= 
 
 Expected: for an entry decided at 10:22:00, ATR5 comes from the bar starting 10:15. Changing the bar starting 10:20 must not change the entry, the stop, the target, or the R/ATR5 record.
 
+## A27 — ATR5 series construction (C-002)
+
+Given three complete prior sessions and the current session:
+
+```text
+last RTH close of the previous session = 100.00
+current session, 5m bar starting 09:30: high 101.20, low 100.90, close 101.00
+```
+
+Expected: that bar's true range is 1.20 (|101.20 - 100.00|), not 0.30 (high - low); the overnight gap is included. The series starts with the first 5-minute RTH bar of the session three sessions back, whose true range is its own high - low, and is seeded with the simple mean of its first 14 true ranges. Adding or removing a fourth earlier session changes the series start and must be treated as a different implementation.
+

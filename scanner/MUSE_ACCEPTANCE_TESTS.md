@@ -297,6 +297,6 @@ PASS: outcomes silent with the previous session filled; official message posted;
 
 ### T7d — Owner sign-off, then recurring tasks
 
-After T7a-T7c pass, the owner records D-025. Then create the recurring tasks with the task body above, timezone America/New_York: outcomes 09:15 Mon-Fri; official 10:30 Mon-Fri; watch 11:30, 12:30, 13:30, 14:30, 15:30 Mon-Fri; weekly Saturday 10:00. If the scheduler cannot restrict to Mon-Fri, daily is fine: the job is silent on weekends. Show the task list as it appears in the scheduler.
+After T7a-T7c pass, the owner records the sign-off as the next decision in DECISION_LOG.md. Then create the recurring tasks with the task body above, timezone America/New_York: outcomes 09:15 Mon-Fri; official 10:30 Mon-Fri; watch 11:30, 12:30, 13:30, 14:30, 15:30 Mon-Fri; weekly Saturday 10:00. If the scheduler cannot restrict to Mon-Fri, daily is fine: the job is silent on weekends. Show the task list as it appears in the scheduler.
 
 Review cadence for the first two weeks: read every message. Any schema failure, label drift without data explanation, fabricated catalyst, or HALT suspends the schedule until reviewed.

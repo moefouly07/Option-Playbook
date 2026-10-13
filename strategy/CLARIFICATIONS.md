@@ -32,6 +32,24 @@ R / ATR5 record                               ATR5 at the entry decision time
 
 Worked example (2026-10-12, put): the candidate retest bar starting 10:20 is evaluated at 10:21 with the ATR5 after the 5-minute bar starting 10:15. The entry decided at 10:22:00 uses the same 5-minute bar; the bar starting 10:20 is not complete until 10:25.
 
-## Open item — ATR5 series seeding
+## C-002 — ATR5 series construction
 
-Wilder ATR14 needs 14 completed 5-minute bars, more than one opening range provides, so the series must start in earlier sessions. The frozen text does not say how many sessions, how the first true range of each session treats the overnight gap, or how the series is seeded. The implementation's convention must be reported and pinned here as C-002 before A01-A26 acceptance. Until then every forward-log row stays UNVALIDATED.
+Decision: D-025 (2026-10-12). Test: A27. Pins the convention the forward-log implementation already used, reported before any validated result.
+
+Ambiguity: Wilder ATR14 needs 14 completed 5-minute bars, more than one opening range provides, and the frozen text does not say where the series starts, how overnight gaps enter the true range, or how the series is seeded.
+
+Reading adopted:
+
+```text
+series     completed 5-minute RTH bars of the 3 previous NYSE sessions,
+           then the current session, in time order (78 bars per full session;
+           fewer on early-close days)
+TR first   high - low for the first bar of the series
+TR later   max(high - low, |high - prev_close|, |low - prev_close|), prev_close =
+           previous bar's close; the first bar of each session uses the previous
+           session's last RTH close, so the overnight gap is included
+seed       simple mean of the first 14 TRs
+update     ATR = (ATR_prev x 13 + TR) / 14 from the 15th bar onward
+```
+
+Combined with C-001, ATR5 at time t is the value after the last bar of this series that is complete at t.

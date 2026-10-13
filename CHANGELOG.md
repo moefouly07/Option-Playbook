@@ -1,5 +1,11 @@
 # Changelog
 
+## CIM-V1.0 clarification C-002 — 2026-10-12
+
+No CIM rule changed. C-002 pins the ATR5 series construction (3 previous sessions plus the current one, gap-inclusive Wilder true range, mean-of-14 seed) with test A27 (D-025). T7b logged PASS.
+
+---
+
 ## CIM-V1.0 clarification C-001 — 2026-10-12
 
 No CIM rule changed. Added `strategy/CLARIFICATIONS.md` (C-001: ATR5 current at every evaluated timestamp; C-002 seeding pending) and acceptance tests A25-A26 (D-024). Scanner sign-off renumbered to D-025.
